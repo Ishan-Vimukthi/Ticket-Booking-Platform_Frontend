@@ -1,2 +1,12 @@
 @import "tailwindcss";
 
+/* Ensure proper spacing for fixed navbar */
+body {
+    padding-top: 0;
+  }
+  
+  /* Hero section height */
+  .h-screen-80 {
+    height: 80vh;
+    min-height: 500px;
+  }

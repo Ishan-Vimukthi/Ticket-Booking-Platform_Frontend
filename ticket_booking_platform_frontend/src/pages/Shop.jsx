@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ProductCard from "../components/ecom_components/cards/ProductCard";
-import ShopNav from "../components/ecom_components/navigation/ShopNav";
+import ShopNav from "../components/ecom_Components/navigation/ShopNav";
 
 const products = [
   {
@@ -21,7 +21,6 @@ const products = [
     rating: 4.2,
     colors: ["red", "white", "blue"],
   },
-  // Add 6-8 more products
   {
     id: 3,
     name: "Unisex Sneakers",
@@ -51,10 +50,34 @@ const Shop = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation with search */}
+      {/* Navigation */}
       <ShopNav onSearch={setSearchQuery} />
 
-      <main className="container mx-auto px-4 py-8">
+      {/* Hero Section */}
+      <div className="relative h-screen-80 bg-gray-900 overflow-hidden pt-16">
+        <div className="absolute inset-0">
+          <img
+            className="w-full h-full object-cover opacity-70"
+            src="/images/hero-bg.jpg" // Replace with your hero image
+            alt="BigIdea hero"
+          />
+          <div className="absolute inset-0 bg-gray-900 mix-blend-multiply"></div>
+        </div>
+        <div className="relative h-full flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-4">
+            WHEREVER & WHENEVER
+          </h1>
+          <p className="text-xl md:text-2xl text-white mb-8">
+            BRAND OF YOUR LIFESTYLE
+          </p>
+          <button className="px-8 py-3 border border-transparent text-base font-medium rounded-md text-gray-900 bg-white hover:bg-gray-100 md:py-4 md:text-lg md:px-10 transition-all duration-300 transform hover:scale-105">
+            Shop Collection
+          </button>
+        </div>
+      </div>
+
+      {/* Products Section */}
+      <main className="container mx-auto px-4 py-12">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Our Products</h1>
