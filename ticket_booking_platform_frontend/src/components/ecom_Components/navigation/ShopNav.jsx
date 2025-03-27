@@ -1,16 +1,33 @@
 import { Link } from "react-router-dom";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
 
-const ShopNav = () => {
+const ShopNav = ({ onSearch }) => {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 50;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+
+    document.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      document.removeEventListener("scroll", handleScroll);
+    };
+  }, [scrolled]);
+
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-10">
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md" : "bg-transparent"}`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Left Section - Logo & Home Link */}
           <div className="flex items-center space-x-8">
             <Link 
               to="/" 
-              className="text-xl font-bold text-blue-600 hover:text-blue-800 transition-colors"
+              className={`text-xl font-bold ${scrolled ? "text-blue-600 hover:text-blue-800" : "text-white hover:text-blue-200"} transition-colors`}
             >
               BigIdea
             </Link>
@@ -18,7 +35,7 @@ const ShopNav = () => {
             {/* Home Link to Main Event Page */}
             <Link 
               to="/" 
-              className="text-gray-600 hover:text-blue-600 transition-colors hidden md:block"
+              className={`${scrolled ? "text-gray-600 hover:text-blue-600" : "text-white hover:text-blue-200"} transition-colors hidden md:block`}
             >
               Home (Events)
             </Link>
@@ -28,13 +45,13 @@ const ShopNav = () => {
           <div className="hidden md:flex space-x-6">
             <Link 
               to="/shop/men" 
-              className="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
+              className={`px-3 py-2 ${scrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"} font-medium transition-colors`}
             >
               Men
             </Link>
             <Link 
               to="/shop/women" 
-              className="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
+              className={`px-3 py-2 ${scrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"} font-medium transition-colors`}
             >
               Women
             </Link>
@@ -44,10 +61,10 @@ const ShopNav = () => {
           <div className="flex items-center">
             <Link 
               to="/cart" 
-              className="p-2 text-gray-400 hover:text-gray-600 relative transition-colors"
+              className={`p-2 relative transition-colors ${scrolled ? "text-gray-400 hover:text-gray-600" : "text-white hover:text-blue-200"}`}
             >
               <ShoppingCartIcon className="h-6 w-6" />
-              {/* Cart Badge - Will be dynamic later */}
+              {/* Cart Badge */}
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                 0
               </span>
@@ -56,16 +73,16 @@ const ShopNav = () => {
         </div>
 
         {/* Mobile Category Links (hidden on desktop) */}
-        <div className="md:hidden flex justify-center space-x-4 pb-2">
+        <div className={`md:hidden flex justify-center space-x-4 pb-2 ${scrolled ? "bg-white" : "bg-transparent"}`}>
           <Link 
             to="/shop/men" 
-            className="text-sm px-2 py-1 text-gray-700 hover:text-blue-600"
+            className={`text-sm px-2 py-1 ${scrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"}`}
           >
             Men
           </Link>
           <Link 
             to="/shop/women" 
-            className="text-sm px-2 py-1 text-gray-700 hover:text-blue-600"
+            className={`text-sm px-2 py-1 ${scrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"}`}
           >
             Women
           </Link>
