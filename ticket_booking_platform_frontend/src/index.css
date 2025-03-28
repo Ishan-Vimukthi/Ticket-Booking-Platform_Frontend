@@ -10,3 +10,20 @@ body {
     height: 80vh;
     min-height: 500px;
   }
+
+.transition-transform {
+  transition-property: transform;
+}
+
+.ease-in-out {
+  transition-timing-function: ease-in-out;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+/* For smoother transitions */
+.cart-slide {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

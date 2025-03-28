@@ -13,6 +13,7 @@ import ManageUsers from './pages/Admin-Dashboard-Pages/ManageUsers'
 import SeatMapping from './pages/Admin-Dashboard-Pages/SeatMapping'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import CartSlider from './components/ecom_Components/cart/CartSlider';
 
 const App = () => {
   return (
@@ -30,6 +31,7 @@ const App = () => {
         <Route path='/manage-users' element={<ManageUsers />} />
       </Routes>
       <ToastContainer />
+      <CartSlider />
     </BrowserRouter>
   )
 }
