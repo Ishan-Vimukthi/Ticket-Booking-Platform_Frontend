@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import EditEventForm from '../dashboard_Components/editEventForm'; // We'll create this component
 
 const EventList = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
+  const [eventToEdit, setEventToEdit] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
   // Base64 encoded SVG fallback image
@@ -92,6 +95,18 @@ const EventList = () => {
     setRetryCount(prev => prev + 1);
   };
 
+  const handleEditClick = (event) => {
+    setEventToEdit(event);
+    setEditModalOpen(true);
+  };
+
+  const handleEventUpdate = (updatedEvent) => {
+    setEvents(events.map(event => 
+      event._id === updatedEvent._id ? updatedEvent : event
+    ));
+    setEditModalOpen(false);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -122,7 +137,6 @@ const EventList = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-
       {events.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <svg
@@ -194,15 +208,15 @@ const EventList = () => {
                 </div>
 
                 <div className="flex justify-between items-center border-t pt-4">
-                  <Link
-                    to={`/events/edit/${event._id}`}
+                  <button
+                    onClick={() => handleEditClick(event)}
                     className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
                   >
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Edit
-                  </Link>
+                  </button>
                   <button
                     onClick={() => {
                       setEventToDelete(event._id);
@@ -224,7 +238,7 @@ const EventList = () => {
 
       {/* Delete confirmation modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg max-w-md w-full shadow-xl">
             <h3 className="text-lg font-medium mb-4">Confirm Deletion</h3>
             <p className="mb-6 text-gray-600">
@@ -243,6 +257,32 @@ const EventList = () => {
               >
                 Confirm Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Event Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold text-gray-800">Edit Event</h2>
+                <button
+                  onClick={() => setEditModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <EditEventForm 
+                event={eventToEdit} 
+                onClose={() => setEditModalOpen(false)}
+                onUpdate={handleEventUpdate}
+              />
             </div>
           </div>
         </div>
