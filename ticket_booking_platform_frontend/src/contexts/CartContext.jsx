@@ -29,6 +29,12 @@ export const CartProvider = ({ children }) => {
     toast.success(`${product.name} added to cart!`, {
       position: "top-right",
       autoClose: 2000,
+      style: {
+        top: '4rem', // Adds space from the top
+        right: '1rem',
+        marginTop: '0.5rem' // Additional spacing
+      },
+      toastClassName: 'mt-4' // Tailwind class for margin-top
     });
   };
 
@@ -69,3 +75,4 @@ export const CartProvider = ({ children }) => {
 };
 
 export const useCart = () => useContext(CartContext);
+export { CartContext };
