@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from 'react'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 import Home from './pages/Home'
@@ -10,6 +11,8 @@ import ManageEvents from './pages/Admin-Dashboard-Pages/ManageEvents'
 import ManageReports from './pages/Admin-Dashboard-Pages/ManageReports'
 import ManageUsers from './pages/Admin-Dashboard-Pages/ManageUsers'
 import SeatMapping from './pages/Admin-Dashboard-Pages/SeatMapping'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const App = () => {
   return (
@@ -24,8 +27,9 @@ const App = () => {
         <Route path="/manage-event" element={<ManageEvents />} />
         <Route path='/reporting' element={<ManageReports />} />
         <Route path='/seat-map' element={<SeatMapping />} />
-        <Route path='/manage-users' element={<ManageReports />} />
+        <Route path='/manage-users' element={<ManageUsers />} />
       </Routes>
+      <ToastContainer />
     </BrowserRouter>
   )
 }

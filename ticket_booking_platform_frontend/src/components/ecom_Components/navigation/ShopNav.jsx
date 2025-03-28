@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
+import { useCart } from '../../../contexts/CartContext';
+ 
 
 const ShopNav = ({ onSearch }) => {
   const [scrolled, setScrolled] = useState(false);
+  const { cartCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,16 +62,16 @@ const ShopNav = ({ onSearch }) => {
 
           {/* Right Section - Cart Icon */}
           <div className="flex items-center">
-            <Link 
-              to="/cart" 
-              className={`p-2 relative transition-colors ${scrolled ? "text-gray-400 hover:text-gray-600" : "text-white hover:text-blue-200"}`}
-            >
-              <ShoppingCartIcon className="h-6 w-6" />
-              {/* Cart Badge */}
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
-            </Link>
+          <Link 
+            to="/cart" 
+            className={`p-2 relative transition-colors ${scrolled ? 'text-gray-400 hover:text-gray-600' : 'text-white hover:text-blue-200'}`}>
+            <ShoppingCartIcon className="h-6 w-6" />
+            {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+            {cartCount}
+            </span>
+           )}
+          </Link>
           </div>
         </div>
 
