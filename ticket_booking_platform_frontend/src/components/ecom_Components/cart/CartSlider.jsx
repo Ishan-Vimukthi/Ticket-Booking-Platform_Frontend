@@ -58,7 +58,17 @@ const CartSlider = () => {
                           <p className="ml-4 font-bold">LKR {item.price.toLocaleString()}</p>
                         </div>
                         
-                        <p className="text-sm text-gray-500 mt-1">Color: Black</p>
+                        {/* Display Color and Size */}
+                        <div className="flex items-center mt-1 space-x-4">
+                          <p className="text-sm text-gray-500">
+                            Color: <span className="font-medium">{item.color || 'Black'}</span>
+                          </p>
+                          {item.size && (
+                            <p className="text-sm text-gray-500">
+                              Size: <span className="font-medium">{item.size}</span>
+                            </p>
+                          )}
+                        </div>
                         
                         <div className="mt-3 flex items-center justify-between">
                           <div className="flex items-center border rounded-md">

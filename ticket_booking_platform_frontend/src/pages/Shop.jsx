@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import ProductCard from "../components/ecom_components/cards/ProductCard";
+import ProductCard from "../components/ecom_Components/cards/ProductCard";
 import ShopNav from "../components/ecom_Components/navigation/ShopNav";
+import Footer from "../components/Footer";
 
 const products = [
   {
@@ -11,6 +12,7 @@ const products = [
     category: "men",
     rating: 4.5,
     colors: ["black", "navy", "olive"],
+    sizes: ["S", "M", "L", "XL"]
   },
   {
     id: 2,
@@ -20,6 +22,7 @@ const products = [
     category: "women",
     rating: 4.2,
     colors: ["red", "white", "blue"],
+    sizes: ["S", "M", "L", "XL"]
   },
   {
     id: 3,
@@ -29,6 +32,7 @@ const products = [
     category: "footwear",
     rating: 4.7,
     colors: ["white", "black"],
+    sizes: ["S", "M", "L", "XL"]
   },
   {
     id: 4,
@@ -38,6 +42,67 @@ const products = [
     category: "electronics",
     rating: 4.8,
     colors: ["black", "silver"],
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 5,
+    name: "oversized tee",
+    price: 100.99,
+    image: "https://via.placeholder.com/300",
+    category: "electronics",
+    rating: 4.8,
+    colors: ["black", "silver"],
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 6,
+    name: "oversized tee",
+    price: 100.99,
+    image: "https://via.placeholder.com/300",
+    category: "electronics",
+    rating: 4.8,
+    colors: ["black", "silver"],
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 7,
+    name: "oversized tee",
+    price: 100.99,
+    image: "https://via.placeholder.com/300",
+    category: "electronics",
+    rating: 4.8,
+    colors: ["black", "silver"],
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 8,
+    name: "oversized tee",
+    price: 100.99,
+    image: "https://via.placeholder.com/300",
+    category: "electronics",
+    rating: 4.8,
+    colors: ["black", "silver"],
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 9,
+    name: "oversized tee",
+    price: 100.99,
+    image: "https://via.placeholder.com/300",
+    category: "electronics",
+    rating: 4.8,
+    colors: ["black", "silver"],
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 10,
+    name: "oversized tee",
+    price: 100.99,
+    image: "https://via.placeholder.com/300",
+    category: "electronics",
+    rating: 4.8,
+    colors: ["black", "silver"],
+    sizes: ["S", "M", "L", "XL"]
   },
 ];
 
@@ -109,6 +174,7 @@ const Shop = () => {
           </div>
         )}
       </main>
+      <Footer/>
     </div>
   );
 };
