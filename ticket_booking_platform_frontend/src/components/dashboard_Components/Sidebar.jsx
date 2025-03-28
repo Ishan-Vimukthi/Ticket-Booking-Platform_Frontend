@@ -22,8 +22,8 @@ const Sidebar = () => {
       path: "/seat-map", 
       icon: <Map size={20} /> },
     
-    { name: "Manage Users", 
-      path: "/manage-users", 
+    { name: "Manage Admins", 
+      path: "/manage-admins", 
       icon: <Edit size={20} /> },
   ];
 
