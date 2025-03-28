@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { ShoppingCartIcon } from "@heroicons/react/24/outline";
+import { ShoppingCartIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { useCart } from '../../../contexts/CartContext';
 
 const ShopNav = ({ onSearch }) => {
   const [scrolled, setScrolled] = useState(false);
-  const { cartCount, toggleCart } = useCart(); // Added toggleCart here
+  const { cartCount, toggleCart } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,24 +22,23 @@ const ShopNav = ({ onSearch }) => {
   }, [scrolled]);
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md" : "bg-transparent"}`}>
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-black shadow-md" : "bg-transparent"}`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Left Section - Logo & Home Link */}
-          <div className="flex items-center space-x-8">
+          {/* Left Section - Home Button & Logo */}
+          <div className="flex items-center space-x-4">
             <Link 
               to="/" 
-              className={`text-xl font-bold ${scrolled ? "text-blue-600 hover:text-blue-800" : "text-white hover:text-blue-200"} transition-colors`}
+              className="text-white hover:text-gray-300 transition-colors"
+              aria-label="Go to home"
+            >
+              <ArrowLeftIcon className="h-5 w-5" />
+            </Link>
+            <Link 
+              to="/" 
+              className={`text-xl font-bold text-white hover:text-gray-300 transition-colors`}
             >
               BigIdea
-            </Link>
-            
-            {/* Home Link to Main Event Page */}
-            <Link 
-              to="/" 
-              className={`${scrolled ? "text-gray-600 hover:text-blue-600" : "text-white hover:text-blue-200"} transition-colors hidden md:block`}
-            >
-              Home (Events)
             </Link>
           </div>
 
@@ -47,23 +46,23 @@ const ShopNav = ({ onSearch }) => {
           <div className="hidden md:flex space-x-6">
             <Link 
               to="/shop/men" 
-              className={`px-3 py-2 ${scrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"} font-medium transition-colors`}
+              className={`px-3 py-2 text-white hover:text-gray-300 font-medium transition-colors hover:underline underline-offset-4`}
             >
-              Men
+              FOR HIM
             </Link>
             <Link 
               to="/shop/women" 
-              className={`px-3 py-2 ${scrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"} font-medium transition-colors`}
+              className={`px-3 py-2 text-white hover:text-gray-300 font-medium transition-colors hover:underline underline-offset-4`}
             >
-              Women
+              FOR HER
             </Link>
           </div>
 
           {/* Right Section - Cart Icon */}
           <div className="flex items-center">
             <button 
-              onClick={toggleCart} // Now properly using toggleCart
-              className={`p-2 relative transition-colors ${scrolled ? 'text-gray-400 hover:text-gray-600' : 'text-white hover:text-blue-200'}`}
+              onClick={toggleCart}
+              className={`p-2 relative text-white hover:text-gray-300 transition-colors`}
               aria-label="Shopping cart"
             >
               <ShoppingCartIcon className="h-6 w-6" />
@@ -77,18 +76,18 @@ const ShopNav = ({ onSearch }) => {
         </div>
 
         {/* Mobile Category Links (hidden on desktop) */}
-        <div className={`md:hidden flex justify-center space-x-4 pb-2 ${scrolled ? "bg-white" : "bg-transparent"}`}>
+        <div className={`md:hidden flex justify-center space-x-4 pb-2 ${scrolled ? "bg-black" : "bg-transparent"}`}>
           <Link 
             to="/shop/men" 
-            className={`text-sm px-2 py-1 ${scrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"}`}
+            className={`text-sm px-2 py-1 text-white hover:text-gray-300`}
           >
-            Men
+            FOR HIM
           </Link>
           <Link 
             to="/shop/women" 
-            className={`text-sm px-2 py-1 ${scrolled ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"}`}
+            className={`text-sm px-2 py-1 text-white hover:text-gray-300`}
           >
-            Women
+            FOR HER
           </Link>
         </div>
       </div>
