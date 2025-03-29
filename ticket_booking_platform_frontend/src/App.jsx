@@ -8,8 +8,8 @@ import Shop from './pages/Shop'
 import AdminDashboard from './pages/Admin-Dashboard-Pages/AdminDashboard'
 import ManageEvents from './pages/Admin-Dashboard-Pages/ManageEvents'
 import ManageReports from './pages/Admin-Dashboard-Pages/ManageReports'
-import ManageAdmins from './pages/Admin-Dashboard-Pages/ManageAdmins'
 import SeatMapping from './pages/Admin-Dashboard-Pages/SeatMapping'
+import EditProfile from './pages/Admin-Dashboard-Pages/EditProfile'
 
 const App = () => {
   return (
@@ -24,7 +24,7 @@ const App = () => {
         <Route path="/manage-event" element={<ManageEvents />} />
         <Route path='/reporting' element={<ManageReports />} />
         <Route path='/seat-map' element={<SeatMapping />} />
-        <Route path='/manage-admins' element={<ManageAdmins />} />
+        <Route path='/edit-profile' element={<EditProfile />} />
       </Routes>
     </BrowserRouter>
   )
