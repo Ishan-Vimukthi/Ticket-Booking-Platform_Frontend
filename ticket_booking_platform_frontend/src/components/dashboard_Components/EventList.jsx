@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import EditEventForm from '../dashboard_Components/editEventForm'; // We'll create this component
+import EditEventForm from '../dashboard_Components/editEventForm';
 
 const EventList = () => {
   const [events, setEvents] = useState([]);
@@ -17,7 +17,13 @@ const EventList = () => {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/events');
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_BASE}/api/events`, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include' // Add this if your API requires cookies
+      });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -25,17 +31,26 @@ const EventList = () => {
       }
       
       const data = await response.json();
-      return data;
+      // Sort events by createdAt date in descending order (newest first)
+      const sortedEvents = data.sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      return sortedEvents;
     } catch (error) {
       console.error('Fetch error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to fetch events. Please check your connection and try again.');
     }
   };
 
   const deleteEvent = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/events/${id}`, {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_BASE}/api/events/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include' // Add this if your API requires cookies
       });
       
       if (!response.ok) {
@@ -51,6 +66,7 @@ const EventList = () => {
 
   useEffect(() => {
     const controller = new AbortController();
+    const signal = controller.signal;
     let mounted = true;
 
     const loadEvents = async () => {
@@ -63,6 +79,10 @@ const EventList = () => {
       } catch (err) {
         if (mounted) {
           setError(err.message);
+          // If connection refused, suggest checking backend
+          if (err.message.includes('Failed to fetch') || err.message.includes('connection refused')) {
+            setError('Could not connect to server. Please make sure the backend is running.');
+          }
         }
       } finally {
         if (mounted) {
@@ -101,9 +121,14 @@ const EventList = () => {
   };
 
   const handleEventUpdate = (updatedEvent) => {
-    setEvents(events.map(event => 
-      event._id === updatedEvent._id ? updatedEvent : event
-    ));
+    setEvents(prevEvents => {
+      const updatedEvents = prevEvents.map(event => 
+        event._id === updatedEvent._id ? updatedEvent : event
+      );
+      return updatedEvents.sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    });
     setEditModalOpen(false);
   };
 
@@ -125,12 +150,24 @@ const EventList = () => {
           <h3 className="text-lg font-medium text-red-800">Error Loading Events</h3>
         </div>
         <p className="mt-2 text-red-700">{error}</p>
-        <button
-          onClick={handleRetry}
-          className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-        >
-          Retry
-        </button>
+        <div className="mt-4 space-x-3">
+          <button
+            onClick={handleRetry}
+            className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+          >
+            Retry
+          </button>
+          {error.includes('backend is running') && (
+            <a 
+              href="http://localhost:3000/api/events" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+            >
+              Test API Endpoint
+            </a>
+          )}
+        </div>
       </div>
     );
   }
@@ -157,7 +194,9 @@ const EventList = () => {
               <div className="relative h-48 bg-gray-100 overflow-hidden">
                 {event.image ? (
                   <img
-                    src={`http://localhost:3000${event.image}`}
+                    src={event.image.startsWith('http') ? event.image : 
+                      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${event.image}`
+                    }
                     alt={event.eventName}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -238,7 +277,7 @@ const EventList = () => {
 
       {/* Delete confirmation modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
           <div className="bg-white p-6 rounded-lg max-w-md w-full shadow-xl">
             <h3 className="text-lg font-medium mb-4">Confirm Deletion</h3>
             <p className="mb-6 text-gray-600">
@@ -264,7 +303,7 @@ const EventList = () => {
 
       {/* Edit Event Modal */}
       {editModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
