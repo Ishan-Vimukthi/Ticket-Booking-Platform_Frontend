@@ -25,6 +25,7 @@ const App = () => {
         <Route path='/reporting' element={<ManageReports />} />
         <Route path='/seat-map' element={<SeatMapping />} />
         <Route path='/edit-profile' element={<EditProfile />} />
+        <Route path="/product/:id" element={<ProductPage />} />
       </Routes>
     </BrowserRouter>
   )
