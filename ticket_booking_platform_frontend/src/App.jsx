@@ -31,7 +31,6 @@ const App = () => {
           <Route path="/manage-event" element={<ManageEvents />} />
           <Route path='/reporting' element={<ManageReports />} />
           <Route path='/seat-map' element={<SeatMapping />} />
-          <Route path='/manage-users' element={<ManageUsers />} />
           <Route path="/product/:id" element={<ProductPage />} /> 
         </Routes>
         <ToastContainer />
