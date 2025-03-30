@@ -29,12 +29,25 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const response = await axios.post('http://localhost:3000/api/admins/login', {
-      email,
-      password
-    });
-    localStorage.setItem('adminToken', response.data.token);
-    setAdmin(response.data.data.admin);
+    try {
+      console.log("Attempting login with:", { email, password }); // Debug log
+      const response = await axios.post('http://localhost:3000/api/admins/login', {
+        email: email.trim(),
+        password: password.trim()
+      });
+  
+      console.log("Login response:", response.data); // Debug log
+      localStorage.setItem('adminToken', response.data.token);
+      setAdmin(response.data.data.admin);
+      return { success: true };
+    } catch (err) {
+      console.error("Login error details:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      throw err; // Rethrow to be caught in your component
+    }
   };
 
   const logout = () => {
