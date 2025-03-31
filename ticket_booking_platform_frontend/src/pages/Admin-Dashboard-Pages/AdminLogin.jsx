@@ -1,27 +1,39 @@
-import { useState } from 'react';
+// pages/Admin-Dashboard-Pages/AdminLogin.jsx
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, error, setError } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, error, setError, admin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/admin/dashboard';
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (admin) {
+      navigate('/admin/dashboard');
+    }
+  }, [admin, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setError('');
     
     // Validate inputs
     if (!email || !password) {
       setError('Please fill in all fields');
+      setIsSubmitting(false);
       return;
     }
 
     const result = await login(email, password);
+    setIsSubmitting(false);
     if (result.success) {
       navigate(from, { replace: true });
     }
@@ -42,9 +54,10 @@ const AdminLogin = () => {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value.trim())}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={isSubmitting}
             />
           </div>
           <div>
@@ -56,13 +69,15 @@ const AdminLogin = () => {
               className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
               minLength={6}
+              disabled={isSubmitting}
             />
           </div>
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200"
+            className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200 disabled:opacity-50"
+            disabled={isSubmitting}
           >
-            Login
+            {isSubmitting ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>

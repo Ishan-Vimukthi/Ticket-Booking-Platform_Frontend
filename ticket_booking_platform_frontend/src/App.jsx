@@ -21,9 +21,9 @@ import { AuthProvider } from "./contexts/AuthContext";
 
 const App = () => {
   return (
-    <CartProvider>
-      <BrowserRouter>
-        <AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
@@ -34,74 +34,64 @@ const App = () => {
             <Route path="/product/:id" element={<ProductPage />} />
 
             {/* Admin Routes */}
-            <Route path="/admin">
-              <Route path="login" element={<AdminLogin />} />
-              <Route
-                index
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard/>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="dashboard"
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard/>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="manage-event"
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard>
-                      <ManageEvents />
-                    </AdminDashboard>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="reporting"
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard>
-                      <ManageReports />
-                    </AdminDashboard>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="seat-map"
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard>
-                      <SeatMapping />
-                    </AdminDashboard>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="edit-profile"
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard>
-                      <EditProfile />
-                    </AdminDashboard>
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Navigate to="/admin/dashboard" replace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/manage-event"
+              element={
+                <ProtectedRoute>
+                  <ManageEvents />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reporting"
+              element={
+                <ProtectedRoute>
+                  <ManageReports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/seat-map"
+              element={
+                <ProtectedRoute>
+                  <SeatMapping />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/edit-profile"
+              element={
+                <ProtectedRoute>
+                  <EditProfile />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Redirect any unmatched routes */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <ToastContainer />
           <CartSlider />
-        </AuthProvider>
-      </BrowserRouter>
-    </CartProvider>
+        </CartProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 };
 
