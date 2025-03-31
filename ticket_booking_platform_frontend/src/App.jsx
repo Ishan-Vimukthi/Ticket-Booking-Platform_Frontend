@@ -11,13 +11,13 @@ import ManageEvents from "./pages/Admin-Dashboard-Pages/ManageEvents";
 import ManageReports from "./pages/Admin-Dashboard-Pages/ManageReports";
 import SeatMapping from "./pages/Admin-Dashboard-Pages/SeatMapping";
 import EditProfile from "./pages/Admin-Dashboard-Pages/EditProfile";
-import AdminLogin from "./pages/Admin-Dashboard-Pages/AdminLogin";
-import ProtectedRoute from "./components/dashboard_Components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CartSlider from "./components/ecom_Components/cart/CartSlider";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/dashboard_Components/ProtectedRoute"; 
+import Login from "./pages/Admin-Dashboard-Pages/AdminLogin"; // Assuming you have a login page for admin
 
 const App = () => {
   return (
@@ -32,56 +32,48 @@ const App = () => {
             <Route path="/contactus" element={<ContactUs />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/product/:id" element={<ProductPage />} />
+            <Route path="/login" element={<Login />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <Navigate to="/admin/dashboard" replace />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/dashboard"
+            {/* Protected Admin Routes */}
+            <Route 
+              path="/admin" 
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
                 </ProtectedRoute>
-              }
+              } 
             />
-            <Route
-              path="/admin/manage-event"
+            <Route 
+              path="/manage-event" 
               element={
                 <ProtectedRoute>
                   <ManageEvents />
                 </ProtectedRoute>
-              }
+              } 
             />
-            <Route
-              path="/admin/reporting"
+            <Route 
+              path="/reporting" 
               element={
                 <ProtectedRoute>
                   <ManageReports />
                 </ProtectedRoute>
-              }
+              } 
             />
-            <Route
-              path="/admin/seat-map"
+            <Route 
+              path="/seat-map" 
               element={
                 <ProtectedRoute>
                   <SeatMapping />
                 </ProtectedRoute>
-              }
+              } 
             />
-            <Route
-              path="/admin/edit-profile"
+            <Route 
+              path="/edit-profile" 
               element={
                 <ProtectedRoute>
                   <EditProfile />
                 </ProtectedRoute>
-              }
+              } 
             />
             
             {/* Redirect any unmatched routes */}

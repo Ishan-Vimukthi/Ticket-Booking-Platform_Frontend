@@ -1,38 +1,18 @@
 import React, { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { BarChart, Calendar, Map, FileText, Menu, X, Edit, LogOut } from "lucide-react"; // Import icons
-import { useAuth } from "../../contexts/AuthContext";
+import { NavLink, useLocation } from "react-router-dom";
+import { BarChart, Calendar, Map, FileText, Menu, X, Edit } from "lucide-react";
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false); // State to control sidebar visibility
 
   const menuItems = [
-    { name: "Analytics", path: "/admin/dashboard", icon: <BarChart size={20} /> },
-    {
-      name: "Manage Events",
-      path: "/admin/manage-event",
-      icon: <Calendar size={20} />,
-    },
-    {
-      name: "Manage Reports",
-      path: "/admin/reporting",
-      icon: <FileText size={20} />,
-    },
-    { name: "Seat Mapping Tool", 
-      path: "/admin/seat-map", 
-      icon: <Map size={20} /> },
-    
-    { name: "Edit Profile", 
-      path: "/admin/edit-profile", 
-      icon: <Edit size={20} /> },
+    { name: "Analytics", path: "/admin", icon: <BarChart size={20} /> },
+    { name: "Manage Events", path: "/manage-event", icon: <Calendar size={20} /> },
+    { name: "Manage Reports", path: "/reporting", icon: <FileText size={20} /> },
+    { name: "Seat Mapping Tool", path: "/seat-map", icon: <Map size={20} /> },
+    { name: "Edit Profile", path: "/edit-profile", icon: <Edit size={20} /> },
   ];
-
-  const handleLogout = () => {
-    logout();
-  };
 
   return (
     <div>
@@ -65,21 +45,13 @@ const Sidebar = () => {
                   ? "bg-blue-600 hover:bg-blue-500 text-white"
                   : ""
               }`}
-              onClick={() => setIsOpen(false)} // Close sidebar on item click (mobile)
+              onClick={() => setIsOpen(false)}
             >
               {item.icon}
               {item.name}
             </NavLink>
           ))}
         </nav>
-
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-4 py-3 px-13 md:px-20 lg:px-20 rounded-xl m-5 font-bold text-white bg-blue-600 hover:bg-blue-700"
-        >
-          <LogOut size={20} />
-          Sign Out
-        </button>
       </div>
     </div>
   );

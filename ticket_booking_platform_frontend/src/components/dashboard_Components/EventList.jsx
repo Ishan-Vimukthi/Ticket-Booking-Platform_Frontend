@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import EditEventForm from '../dashboard_Components/editEventForm';
 
 const EventList = () => {
@@ -12,33 +11,22 @@ const EventList = () => {
   const [eventToEdit, setEventToEdit] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Base64 encoded SVG fallback image
   const fallbackImage = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgNDAwIDIwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSI+RXZlbnQgSW1hZ2U8L3RleHQ+PC9zdmc+';
 
   const fetchEvents = async () => {
     try {
       const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_BASE}/api/events`, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include' // Add this if your API requires cookies
-      });
+      const response = await fetch(`${API_BASE}/api/events`);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Server returned ${response.status}`);
+        throw new Error(`Server returned ${response.status}`);
       }
       
       const data = await response.json();
-      // Sort events by createdAt date in descending order (newest first)
-      const sortedEvents = data.sort((a, b) => {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
-      return sortedEvents;
+      return data;
     } catch (error) {
       console.error('Fetch error:', error);
-      throw new Error(error.message || 'Failed to fetch events. Please check your connection and try again.');
+      throw new Error('Failed to fetch events. Please check your connection and try again.');
     }
   };
 
@@ -46,11 +34,7 @@ const EventList = () => {
     try {
       const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
       const response = await fetch(`${API_BASE}/api/events/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include' // Add this if your API requires cookies
+        method: 'DELETE'
       });
       
       if (!response.ok) {
@@ -66,7 +50,6 @@ const EventList = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    const signal = controller.signal;
     let mounted = true;
 
     const loadEvents = async () => {
@@ -79,7 +62,6 @@ const EventList = () => {
       } catch (err) {
         if (mounted) {
           setError(err.message);
-          // If connection refused, suggest checking backend
           if (err.message.includes('Failed to fetch') || err.message.includes('connection refused')) {
             setError('Could not connect to server. Please make sure the backend is running.');
           }
@@ -122,12 +104,9 @@ const EventList = () => {
 
   const handleEventUpdate = (updatedEvent) => {
     setEvents(prevEvents => {
-      const updatedEvents = prevEvents.map(event => 
+      return prevEvents.map(event => 
         event._id === updatedEvent._id ? updatedEvent : event
       );
-      return updatedEvents.sort((a, b) => {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
     });
     setEditModalOpen(false);
   };
