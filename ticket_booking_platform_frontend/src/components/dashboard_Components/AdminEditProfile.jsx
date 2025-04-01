@@ -18,7 +18,8 @@ const AdminListWithCrud = () => {
     reset,
     formState: { errors },
     setError,
-    clearErrors
+    clearErrors,
+    getValues
   } = useForm();
 
   // API base URL
