@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { validateEventForm } from "./eventValidation";
 import Notification from "./Notification";
+import { validateEventForm } from "./eventValidation";
 
-const AddEventForm = ({ onClose }) => {
+const AddEventForm = ({ onClose, onEventCreated }) => {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  
   const [formData, setFormData] = useState({
     eventName: "",
     eventDescription: "",
@@ -12,12 +14,12 @@ const AddEventForm = ({ onClose }) => {
     venue: "",
     totalTickets: "",
     ticketTypes: [
-      { type: "General", price: 0 },
-      { type: "VIP", price: 0 },
-      { type: "VVIP", price: 0 },
+      { type: "General", price: "" },
+      { type: "VIP", price: "" },
+      { type: "VVIP", price: "" },
     ],
     image: null,
-    status: "",
+    status: "Upcoming"
   });
 
   const [errors, setErrors] = useState({
@@ -32,39 +34,12 @@ const AddEventForm = ({ onClose }) => {
     status: ''
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState({
     show: false,
     message: '',
     type: 'success'
   });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
-    }
-  };
-
-  const handleTicketTypeChange = (index, e) => {
-    const { name, value } = e.target;
-    const updatedTicketTypes = [...formData.ticketTypes];
-    updatedTicketTypes[index][name] = value;
-    setFormData({ ...formData, ticketTypes: updatedTicketTypes });
-
-    if (name === 'price' && errors.ticketTypes[index]) {
-      const newErrors = [...errors.ticketTypes];
-      newErrors[index] = '';
-      setErrors({ ...errors, ticketTypes: newErrors });
-    }
-  };
-
-  const handleImageChange = (e) => {
-    setFormData({ ...formData, image: e.target.files[0] });
-    if (errors.image) {
-      setErrors({ ...errors, image: '' });
-    }
-  };
 
   const venues = [
     { id: "1", name: "Venue 1" },
@@ -75,73 +50,129 @@ const AddEventForm = ({ onClose }) => {
   const statusOptions = [
     { id: "1", name: "Upcoming" },
     { id: "2", name: "Ongoing" },
-    { id: "3", name: "Past" },
+    { id: "3", name: "Completed" },
   ];
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: value 
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleTicketTypeChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedTicketTypes = [...formData.ticketTypes];
+    updatedTicketTypes[index] = { 
+      ...updatedTicketTypes[index], 
+      [name]: name === 'price' ? parseFloat(value) || 0 : value
+    };
+    
+    setFormData(prev => ({ ...prev, ticketTypes: updatedTicketTypes }));
+
+    // Clear error for this ticket type
+    if (errors.ticketTypes?.[index]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        if (newErrors.ticketTypes) {
+          newErrors.ticketTypes[index] = "";
+        }
+        return newErrors;
+      });
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, image: file }));
+      setErrors(prev => ({ ...prev, image: '' }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setIsSubmitting(true);
+  
+    // Validate form
     const { errors: validationErrors, isValid } = validateEventForm(formData);
     setErrors(validationErrors);
-
+  
     if (!isValid) {
       setNotification({
         show: true,
-        message: 'Please fix the errors in the form',
+        message: 'Please fix the form errors',
         type: 'error'
       });
+      setIsSubmitting(false);
       return;
     }
-
-    const data = new FormData();
-    data.append("eventName", formData.eventName);
-    data.append("eventDescription", formData.eventDescription);
-    data.append("eventDate", formData.eventDate);
-    data.append("eventTime", formData.eventTime);
-    data.append("venue", formData.venue);
-    data.append("totalTickets", formData.totalTickets);
-    data.append("ticketTypes", JSON.stringify(formData.ticketTypes));
-    data.append("image", formData.image);
-    data.append("status", formData.status);
-
+  
     try {
-      const response = await axios.post("http://localhost:3000/api/events", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const formDataToSend = new FormData();
       
-      setNotification({
-        show: true,
-        message: 'Event created successfully!',
-        type: 'success'
-      });
-
-      // Reset form after successful submission
-      setTimeout(() => {
-        setFormData({
-          eventName: "",
-          eventDescription: "",
-          eventDate: "",
-          eventTime: "",
-          venue: "",
-          totalTickets: "",
-          ticketTypes: [
-            { type: "General", price: 0 },
-            { type: "VIP", price: 0 },
-            { type: "VVIP", price: 0 },
-          ],
-          image: null,
-          status: "",
-        });
-        onClose();
-      }, 1500);
-
+      // Append all fields
+      formDataToSend.append('eventName', formData.eventName.trim());
+      formDataToSend.append('eventDescription', formData.eventDescription.trim());
+      formDataToSend.append('eventDate', formData.eventDate);
+      formDataToSend.append('eventTime', formData.eventTime);
+      formDataToSend.append('venue', formData.venue);
+      formDataToSend.append('totalTickets', formData.totalTickets);
+      
+      // Convert ticketTypes to JSON string
+      const ticketTypesJson = JSON.stringify(formData.ticketTypes.map(ticket => ({
+        type: ticket.type,
+        price: parseFloat(ticket.price)
+      })));
+      formDataToSend.append('ticketTypes', ticketTypesJson);
+      
+      formDataToSend.append('status', formData.status);
+      
+      // Append image if exists
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
+      }
+  
+      const response = await axios.post(
+        `${API_BASE}/api/events`,
+        formDataToSend,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+  
+      // Success handling...
     } catch (error) {
       console.error("Error creating event:", error);
+      let errorMessage = 'Failed to create event. Please try again.';
+      
+      if (error.response) {
+        console.log("Server response:", error.response.data);
+        
+        if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.response.data.errors) {
+          errorMessage = Object.entries(error.response.data.errors)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join('\n');
+        }
+      }
+  
       setNotification({
         show: true,
-        message: 'Failed to create event. Please try again.',
+        message: errorMessage,
         type: 'error'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -157,7 +188,7 @@ const AddEventForm = ({ onClose }) => {
               {/* Event Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Event Name
+                  Event Name *
                 </label>
                 <input
                   type="text"
@@ -177,7 +208,7 @@ const AddEventForm = ({ onClose }) => {
               {/* Event Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Event Description
+                  Event Description *
                 </label>
                 <textarea
                   name="eventDescription"
@@ -198,13 +229,14 @@ const AddEventForm = ({ onClose }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Event Date
+                    Event Date *
                   </label>
                   <input
                     type="date"
                     name="eventDate"
                     value={formData.eventDate}
                     onChange={handleChange}
+                    min={new Date().toISOString().split('T')[0]}
                     className={`mt-1 block w-full p-2 border ${
                       errors.eventDate ? 'border-red-500' : 'border-gray-300'
                     } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
@@ -215,7 +247,7 @@ const AddEventForm = ({ onClose }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Event Time
+                    Event Time *
                   </label>
                   <input
                     type="time"
@@ -235,7 +267,7 @@ const AddEventForm = ({ onClose }) => {
               {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Event Image
+                  Event Image *
                 </label>
                 <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ${
                   errors.image ? 'border-red-500' : 'border-gray-300'
@@ -267,6 +299,7 @@ const AddEventForm = ({ onClose }) => {
                           type="file"
                           onChange={handleImageChange}
                           className="sr-only"
+                          accept="image/*"
                         />
                       </label>
                       <p className="pl-1">or drag and drop</p>
@@ -277,6 +310,9 @@ const AddEventForm = ({ onClose }) => {
                 {errors.image && (
                   <p className="mt-1 text-sm text-red-600">{errors.image}</p>
                 )}
+                {formData.image && (
+                  <p className="mt-1 text-sm text-green-600">Selected: {formData.image.name}</p>
+                )}
               </div>
             </div>
 
@@ -286,7 +322,7 @@ const AddEventForm = ({ onClose }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Venue
+                    Venue *
                   </label>
                   <select
                     name="venue"
@@ -309,12 +345,13 @@ const AddEventForm = ({ onClose }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Total Tickets
+                    Total Tickets *
                   </label>
                   <input
                     type="number"
                     name="totalTickets"
                     placeholder="Enter total tickets"
+                    min="1"
                     value={formData.totalTickets}
                     onChange={handleChange}
                     className={`mt-1 block w-full p-2 border ${
@@ -330,31 +367,25 @@ const AddEventForm = ({ onClose }) => {
               {/* Status */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Status
+                  Status *
                 </label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className={`mt-1 block w-full p-2 border ${
-                    errors.status ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
+                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">Select Status</option>
                   {statusOptions.map((status) => (
                     <option key={status.id} value={status.name}>
                       {status.name}
                     </option>
                   ))}
                 </select>
-                {errors.status && (
-                  <p className="mt-1 text-sm text-red-600">{errors.status}</p>
-                )}
               </div>
 
               {/* Ticket Types */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-700">Ticket Types</h3>
+                <h3 className="text-sm font-medium text-gray-700">Ticket Types *</h3>
                 
                 {/* General Ticket */}
                 <div>
@@ -374,13 +405,15 @@ const AddEventForm = ({ onClose }) => {
                         type="number"
                         name="price"
                         placeholder="Price"
+                        min="0"
+                        step="0.01"
                         value={formData.ticketTypes[0].price}
                         onChange={(e) => handleTicketTypeChange(0, e)}
                         className={`w-full p-2 border ${
-                          errors.ticketTypes[0] ? 'border-red-500' : 'border-gray-300'
+                          errors.ticketTypes?.[0] ? 'border-red-500' : 'border-gray-300'
                         } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                       />
-                      {errors.ticketTypes[0] && (
+                      {errors.ticketTypes?.[0] && (
                         <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[0]}</p>
                       )}
                     </div>
@@ -405,13 +438,15 @@ const AddEventForm = ({ onClose }) => {
                         type="number"
                         name="price"
                         placeholder="Price"
+                        min="0"
+                        step="0.01"
                         value={formData.ticketTypes[1].price}
                         onChange={(e) => handleTicketTypeChange(1, e)}
                         className={`w-full p-2 border ${
-                          errors.ticketTypes[1] ? 'border-red-500' : 'border-gray-300'
+                          errors.ticketTypes?.[1] ? 'border-red-500' : 'border-gray-300'
                         } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                       />
-                      {errors.ticketTypes[1] && (
+                      {errors.ticketTypes?.[1] && (
                         <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[1]}</p>
                       )}
                     </div>
@@ -436,13 +471,15 @@ const AddEventForm = ({ onClose }) => {
                         type="number"
                         name="price"
                         placeholder="Price"
+                        min="0"
+                        step="0.01"
                         value={formData.ticketTypes[2].price}
                         onChange={(e) => handleTicketTypeChange(2, e)}
                         className={`w-full p-2 border ${
-                          errors.ticketTypes[2] ? 'border-red-500' : 'border-gray-300'
+                          errors.ticketTypes?.[2] ? 'border-red-500' : 'border-gray-300'
                         } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                       />
-                      {errors.ticketTypes[2] && (
+                      {errors.ticketTypes?.[2] && (
                         <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[2]}</p>
                       )}
                     </div>
@@ -453,12 +490,22 @@ const AddEventForm = ({ onClose }) => {
           </div>
 
           {/* Submit Button */}
-          <div className="mt-6">
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              disabled={isSubmitting}
+              className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
             >
-              Create Event
+              {isSubmitting ? 'Creating...' : 'Create Event'}
             </button>
           </div>
         </form>
@@ -469,7 +516,7 @@ const AddEventForm = ({ onClose }) => {
         <Notification 
           message={notification.message}
           type={notification.type}
-          onClose={() => setNotification({...notification, show: false})}
+          onClose={() => setNotification(prev => ({...prev, show: false}))}
         />
       )}
     </>

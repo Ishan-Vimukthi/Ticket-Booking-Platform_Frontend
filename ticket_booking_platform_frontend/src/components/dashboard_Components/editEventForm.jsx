@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { validateEventForm } from "./eventValidation";
+import { validateEventForm } from "../dashboard_Components/eventValidation";
 import Notification from "./Notification";
-import { useAuth } from "../../contexts/AuthContext";
 
 const EditEventForm = ({ event, onClose, onUpdate }) => {
-  const { user } = useAuth() || {};
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
   
   const [formData, setFormData] = useState({
@@ -35,19 +33,15 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
 
   useEffect(() => {
     if (event) {
-      const formattedDate = new Date(event.eventDate).toISOString().split('T')[0];
+      const formattedDate = event.eventDate ? new Date(event.eventDate).toISOString().split('T')[0] : "";
       setFormData({
         eventName: event.eventName || "",
         eventDescription: event.eventDescription || "",
         eventDate: formattedDate,
         eventTime: event.eventTime || "",
         venue: event.venue || "",
-        totalTickets: event.totalTickets || "",
-        ticketTypes: event.ticketTypes || [
-          { type: "General", price: 0 },
-          { type: "VIP", price: 0 },
-          { type: "VVIP", price: 0 },
-        ],
+        totalTickets: event.totalTickets?.toString() || "",
+        ticketTypes: event.ticketTypes || formData.ticketTypes,
         image: null,
         currentImage: event.image || "",
         status: event.status || "Upcoming"
@@ -88,7 +82,7 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
     const file = e.target.files[0];
     if (file) {
       const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 10 * 1024 * 1024;
       
       if (!validTypes.includes(file.type)) {
         setErrors(prev => ({ ...prev, image: 'Only JPG, PNG or GIF images are allowed' }));
@@ -109,14 +103,9 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // First check if user is authenticated
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setNotification({
-        show: true,
-        message: 'You need to be logged in to update events',
-        type: 'error'
-      });
+    const validationErrors = validateEventForm(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       setIsSubmitting(false);
       return;
     }
@@ -124,7 +113,13 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found');
+        setNotification({
+          show: true,
+          message: 'You need to be logged in to update events',
+          type: 'error'
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       const formDataToSend = new FormData();
@@ -141,7 +136,7 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
         formDataToSend.append("image", formData.image);
       }
 
-      const response = await axios.patch(
+      const response = await axios.put(
         `${API_BASE}/api/events/${event._id}`,
         formDataToSend,
         {
@@ -171,6 +166,9 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
           errorMessage = 'Session expired. Please log in again.';
         } else if (error.response.data?.message) {
           errorMessage = error.response.data.message;
+        } else if (error.response.data?.errors) {
+          setErrors(error.response.data.errors);
+          errorMessage = 'Please fix the form errors';
         }
       } else if (error.message) {
         errorMessage = error.message;
@@ -211,7 +209,6 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
 
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -224,11 +221,10 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                     onChange={handleChange}
                     className={`w-full p-2 border rounded-md ${
                       errors.eventName ? 'border-red-500' : 'border-gray-300'
-                    } focus:ring-blue-500 focus:border-blue-500`}
+                    }`}
+                    required
                   />
-                  {errors.eventName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.eventName}</p>
-                  )}
+                  {errors.eventName && <p className="mt-1 text-sm text-red-600">{errors.eventName}</p>}
                 </div>
 
                 <div>
@@ -242,11 +238,9 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                     rows={4}
                     className={`w-full p-2 border rounded-md ${
                       errors.eventDescription ? 'border-red-500' : 'border-gray-300'
-                    } focus:ring-blue-500 focus:border-blue-500`}
+                    }`}
                   />
-                  {errors.eventDescription && (
-                    <p className="mt-1 text-sm text-red-600">{errors.eventDescription}</p>
-                  )}
+                  {errors.eventDescription && <p className="mt-1 text-sm text-red-600">{errors.eventDescription}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -261,11 +255,10 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                       onChange={handleChange}
                       className={`w-full p-2 border rounded-md ${
                         errors.eventDate ? 'border-red-500' : 'border-gray-300'
-                      } focus:ring-blue-500 focus:border-blue-500`}
+                      }`}
+                      required
                     />
-                    {errors.eventDate && (
-                      <p className="mt-1 text-sm text-red-600">{errors.eventDate}</p>
-                    )}
+                    {errors.eventDate && <p className="mt-1 text-sm text-red-600">{errors.eventDate}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -278,11 +271,10 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                       onChange={handleChange}
                       className={`w-full p-2 border rounded-md ${
                         errors.eventTime ? 'border-red-500' : 'border-gray-300'
-                      } focus:ring-blue-500 focus:border-blue-500`}
+                      }`}
+                      required
                     />
-                    {errors.eventTime && (
-                      <p className="mt-1 text-sm text-red-600">{errors.eventTime}</p>
-                    )}
+                    {errors.eventTime && <p className="mt-1 text-sm text-red-600">{errors.eventTime}</p>}
                   </div>
                 </div>
 
@@ -329,16 +321,13 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                       <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                     </div>
                   </div>
-                  {errors.image && (
-                    <p className="mt-1 text-sm text-red-600">{errors.image}</p>
-                  )}
+                  {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
                   {formData.image && (
                     <p className="mt-1 text-sm text-green-600">New image selected: {formData.image.name}</p>
                   )}
                 </div>
               </div>
 
-              {/* Right Column */}
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -352,11 +341,10 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                       onChange={handleChange}
                       className={`w-full p-2 border rounded-md ${
                         errors.venue ? 'border-red-500' : 'border-gray-300'
-                      } focus:ring-blue-500 focus:border-blue-500`}
+                      }`}
+                      required
                     />
-                    {errors.venue && (
-                      <p className="mt-1 text-sm text-red-600">{errors.venue}</p>
-                    )}
+                    {errors.venue && <p className="mt-1 text-sm text-red-600">{errors.venue}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -370,11 +358,10 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                       onChange={handleChange}
                       className={`w-full p-2 border rounded-md ${
                         errors.totalTickets ? 'border-red-500' : 'border-gray-300'
-                      } focus:ring-blue-500 focus:border-blue-500`}
+                      }`}
+                      required
                     />
-                    {errors.totalTickets && (
-                      <p className="mt-1 text-sm text-red-600">{errors.totalTickets}</p>
-                    )}
+                    {errors.totalTickets && <p className="mt-1 text-sm text-red-600">{errors.totalTickets}</p>}
                   </div>
                 </div>
 
@@ -388,15 +375,14 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                     onChange={handleChange}
                     className={`w-full p-2 border rounded-md ${
                       errors.status ? 'border-red-500' : 'border-gray-300'
-                    } focus:ring-blue-500 focus:border-blue-500`}
+                    }`}
+                    required
                   >
                     <option value="Upcoming">Upcoming</option>
                     <option value="Ongoing">Ongoing</option>
                     <option value="Completed">Completed</option>
                   </select>
-                  {errors.status && (
-                    <p className="mt-1 text-sm text-red-600">{errors.status}</p>
-                  )}
+                  {errors.status && <p className="mt-1 text-sm text-red-600">{errors.status}</p>}
                 </div>
 
                 <div className="space-y-4">
@@ -425,7 +411,8 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                             onChange={(e) => handleTicketTypeChange(index, e)}
                             className={`w-full p-2 border rounded-md ${
                               errors.ticketTypes?.[index] ? 'border-red-500' : 'border-gray-300'
-                            } focus:ring-blue-500 focus:border-blue-500`}
+                            }`}
+                            required
                           />
                           {errors.ticketTypes?.[index] && (
                             <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[index]}</p>
