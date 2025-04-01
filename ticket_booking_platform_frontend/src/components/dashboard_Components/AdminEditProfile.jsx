@@ -1,26 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
-import { toast } from 'react-toastify';
 
 const AdminListWithCrud = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
-  const [modalType, setModalType] = useState(null); // 'create', 'edit', 'password'
+  const [modalType, setModalType] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState(null);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   
   const { 
     register, 
     handleSubmit, 
     reset,
-    formState: { errors } 
+    formState: { errors },
+    setError,
+    clearErrors
   } = useForm();
 
   // API base URL
   const API_URL = 'http://localhost:3000/api/admins';
+
+  // Show simple notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+  };
 
   // Fetch all admins
   useEffect(() => {
@@ -29,7 +37,7 @@ const AdminListWithCrud = () => {
         const response = await axios.get(API_URL);
         setAdmins(response.data.data?.admins || []);
       } catch (err) {
-        toast.error('Failed to load admins');
+        showNotification('Failed to load admins', 'error');
         console.error(err);
       } finally {
         setLoading(false);
@@ -73,6 +81,7 @@ const AdminListWithCrud = () => {
     setIsModalOpen(false);
     setSelectedAdmin(null);
     setModalType(null);
+    clearErrors();
   };
 
   // Open delete confirmation modal
@@ -92,10 +101,10 @@ const AdminListWithCrud = () => {
     try {
       const response = await axios.post(API_URL, data);
       setAdmins([...admins, response.data.data]);
-      toast.success('Admin created successfully');
+      showNotification('Admin created successfully');
       closeModal();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create admin');
+      showNotification(err.response?.data?.message || 'Failed to create admin', 'error');
       console.error(err);
     }
   };
@@ -107,10 +116,10 @@ const AdminListWithCrud = () => {
       setAdmins(admins.map(admin => 
         admin._id === selectedAdmin._id ? response.data.data : admin
       ));
-      toast.success('Admin updated successfully');
+      showNotification('Admin updated successfully');
       closeModal();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update admin');
+      showNotification(err.response?.data?.message || 'Failed to update admin', 'error');
       console.error(err);
     }
   };
@@ -122,10 +131,10 @@ const AdminListWithCrud = () => {
     try {
       await axios.delete(`${API_URL}/${adminToDelete._id}`);
       setAdmins(admins.filter(admin => admin._id !== adminToDelete._id));
-      toast.success('Admin deleted successfully');
+      showNotification('Admin deleted successfully');
       closeDeleteModal();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete admin');
+      showNotification(err.response?.data?.message || 'Failed to delete admin', 'error');
       console.error(err);
     }
   };
@@ -134,18 +143,33 @@ const AdminListWithCrud = () => {
   const handlePasswordChange = async (data) => {
     try {
       if (data.newPassword !== data.confirmPassword) {
-        throw new Error("Passwords don't match");
+        setError('confirmPassword', {
+          type: 'manual',
+          message: "Passwords don't match"
+        });
+        return;
       }
 
-      await axios.patch(`${API_URL}/${selectedAdmin._id}/change-password`, {
+      const response = await axios.patch(`${API_URL}/${selectedAdmin._id}/change-password`, {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword
       });
 
-      toast.success('Password updated successfully');
-      closeModal();
+      if (response.data.status === 'success') {
+        showNotification('Password updated successfully');
+        closeModal();
+      } else {
+        setError('currentPassword', {
+          type: 'manual',
+          message: response.data.message || 'Invalid current password'
+        });
+      }
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to update password');
+      const errorMessage = err.response?.data?.message || 'Failed to update password';
+      setError('currentPassword', {
+        type: 'manual',
+        message: errorMessage.includes('current') ? errorMessage : 'Invalid current password'
+      });
       console.error(err);
     }
   };
@@ -156,6 +180,15 @@ const AdminListWithCrud = () => {
 
   return (
     <div className="container mx-auto p-4">
+      {/* Simple Notification */}
+      {notification.show && (
+        <div className={`fixed top-4 right-4 p-4 rounded-md shadow-md z-50 ${
+          notification.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Admin Management</h1>
         <button
@@ -208,7 +241,7 @@ const AdminListWithCrud = () => {
                 </tr>
               ))
             ) : (
-              <tr>
+              <tr key="no-admins">
                 <td colSpan="4" className="py-4 text-center text-gray-500">
                   No admins found
                 </td>
@@ -352,7 +385,9 @@ const AdminListWithCrud = () => {
                       <input
                         type="password"
                         {...register('confirmPassword', { 
-                          required: 'Please confirm your password'
+                          required: 'Please confirm your password',
+                          validate: value => 
+                            value === getValues('newPassword') || "Passwords don't match"
                         })}
                         className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
