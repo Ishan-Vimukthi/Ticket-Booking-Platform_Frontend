@@ -14,6 +14,7 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import ProductPage from './pages/Ecom_Pages/ProductPage'
 import { CartProvider } from './contexts/CartContext';
+import CheckoutPage from './pages/Ecom_Pages/CheckoutPage'
 
 const App = () => {
   return (
@@ -31,6 +32,7 @@ const App = () => {
           <Route path='/seat-map' element={<SeatMapping />} />
           <Route path='/manage-users' element={<ManageUsers />} />
           <Route path="/product/:id" element={<ProductPage />} /> 
+          <Route path="/checkout" element={<CheckoutPage />} />
         </Routes>
         <ToastContainer />
       </BrowserRouter>
