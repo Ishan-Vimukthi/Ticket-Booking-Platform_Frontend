@@ -10,6 +10,9 @@ const Home = () => {
         <NavBar/>
         <EventSearch/>
         <MiddleText/>
+        <div className='p-10'>
+          Event cards here
+        </div>
         <Footer/>
     </div>
   )

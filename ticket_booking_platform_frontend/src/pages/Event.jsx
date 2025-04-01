@@ -1,3 +1,4 @@
+
 import React from "react";
 import Navbar from "../components/NavBar";
 import Footer from "../components/Footer";
@@ -7,6 +8,7 @@ import EventCard from "../components/EventCard";
 const Event = () => {
   return (
     <div>
+
       <Navbar />
       <MiddleTextEvents />
 
@@ -25,6 +27,7 @@ const Event = () => {
       </div>
 
       <Footer />
+
     </div>
   );
 };
