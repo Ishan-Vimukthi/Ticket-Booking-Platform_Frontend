@@ -1,4 +1,3 @@
-// src/App.jsx
 import React from 'react'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 import Home from './pages/Home'
@@ -13,7 +12,6 @@ import ManageUsers from './pages/Admin-Dashboard-Pages/ManageUsers'
 import SeatMapping from './pages/Admin-Dashboard-Pages/SeatMapping'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import CartSlider from './components/ecom_Components/cart/CartSlider';
 import ProductPage from './pages/Ecom_Pages/ProductPage'
 import { CartProvider } from './contexts/CartContext';
 
@@ -35,10 +33,9 @@ const App = () => {
           <Route path="/product/:id" element={<ProductPage />} /> 
         </Routes>
         <ToastContainer />
-        <CartSlider />
       </BrowserRouter>
     </CartProvider>
   );
 }
 
-export default App
+export default App;

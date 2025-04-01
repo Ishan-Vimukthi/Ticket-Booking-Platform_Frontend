@@ -15,10 +15,12 @@ const CartSlider = () => {
   return (
     <>
       {/* Blurred Background Overlay */}
-      <div 
-        className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-md transition-opacity ${isCartOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
-        onClick={closeCart}
-      ></div>
+      {isCartOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-md transition-opacity"
+          onClick={closeCart}
+        ></div>
+      )}
 
       {/* Cart Panel */}
       <div 
