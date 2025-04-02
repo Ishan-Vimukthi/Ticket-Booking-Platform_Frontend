@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ProductCard from "../components/ecom_Components/cards/ProductCard";
 import ShopNav from "../components/ecom_Components/navigation/ShopNav";
 import Footer from "../components/Footer";
+import CartSlider from "../components/ecom_Components/cart/CartSlider";
 
 const products = [
   {
@@ -117,13 +118,16 @@ const Shop = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <ShopNav onSearch={setSearchQuery} />
+      
+      {/* Cart Slider */}
+      <CartSlider />
 
       {/* Hero Section */}
-      <div className="relative h-screen-80 bg-gray-900 overflow-hidden pt-16">
+      <div className="relative h-[80vh] bg-gray-900 overflow-hidden pt-16">
         <div className="absolute inset-0">
           <img
             className="w-full h-full object-cover opacity-70"
-            src="/images/hero-bg.jpg" // Replace with your hero image
+            src="/images/hero-bg.jpg"
             alt="BigIdea hero"
           />
           <div className="absolute inset-0 bg-gray-900 mix-blend-multiply"></div>
