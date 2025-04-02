@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { validateEventForm } from "../dashboard_Components/eventValidation";
-import Notification from "./Notification";
 
 const EditEventForm = ({ event, onClose, onUpdate }) => {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
@@ -41,13 +39,38 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
         eventTime: event.eventTime || "",
         venue: event.venue || "",
         totalTickets: event.totalTickets?.toString() || "",
-        ticketTypes: event.ticketTypes || formData.ticketTypes,
+        ticketTypes: event.ticketTypes || [
+          { type: "General", price: 0 },
+          { type: "VIP", price: 0 },
+          { type: "VVIP", price: 0 },
+        ],
         image: null,
         currentImage: event.image || "",
         status: event.status || "Upcoming"
       });
     }
   }, [event]);
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.eventName.trim()) newErrors.eventName = "Event name is required";
+    if (!formData.eventDate) newErrors.eventDate = "Event date is required";
+    if (!formData.eventTime) newErrors.eventTime = "Event time is required";
+    if (!formData.venue.trim()) newErrors.venue = "Venue is required";
+    if (!formData.totalTickets || parseInt(formData.totalTickets) <= 0) 
+      newErrors.totalTickets = "Valid ticket quantity is required";
+    
+    formData.ticketTypes.forEach((ticket, index) => {
+      if (ticket.price < 0) {
+        newErrors.ticketTypes = newErrors.ticketTypes || [];
+        newErrors.ticketTypes[index] = "Price cannot be negative";
+      }
+    });
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -103,25 +126,12 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const validationErrors = validateEventForm(formData);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    if (!validateForm()) {
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setNotification({
-          show: true,
-          message: 'You need to be logged in to update events',
-          type: 'error'
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
       const formDataToSend = new FormData();
       formDataToSend.append("eventName", formData.eventName);
       formDataToSend.append("eventDescription", formData.eventDescription);
@@ -141,8 +151,7 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
         formDataToSend,
         {
           headers: { 
-            "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`
+            "Content-Type": "multipart/form-data"
           }
         }
       );
@@ -153,25 +162,19 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
         type: 'success'
       });
 
-      setTimeout(() => {
-        onUpdate(response.data);
-        onClose();
-      }, 1500);
+      onUpdate(response.data);
+      onClose();
     } catch (error) {
       console.error("Error updating event:", error);
       let errorMessage = 'Failed to update event. Please try again.';
       
       if (error.response) {
-        if (error.response.status === 401) {
-          errorMessage = 'Session expired. Please log in again.';
-        } else if (error.response.data?.message) {
+        if (error.response.data?.message) {
           errorMessage = error.response.data.message;
         } else if (error.response.data?.errors) {
           setErrors(error.response.data.errors);
           errorMessage = 'Please fix the form errors';
         }
-      } else if (error.message) {
-        errorMessage = error.message;
       }
 
       setNotification({
@@ -184,10 +187,10 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) return imagePath;
-    return `${API_BASE}${imagePath}`;
+  const getImageUrl = () => {
+    if (!formData.currentImage) return '';
+    if (formData.currentImage.startsWith('http')) return formData.currentImage;
+    return `${API_BASE}${formData.currentImage}`;
   };
 
   return (
@@ -207,7 +210,15 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          {notification.show && (
+            <div className={`mb-4 p-3 rounded-md ${
+              notification.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            }`}>
+              {notification.message}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} encType="multipart/form-data">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
@@ -286,7 +297,7 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                     <div className="mb-3">
                       <p className="text-sm text-gray-500 mb-1">Current Image:</p>
                       <img 
-                        src={getImageUrl(formData.currentImage)} 
+                        src={getImageUrl()} 
                         alt="Current event" 
                         className="h-40 w-full object-cover rounded border"
                         onError={(e) => {
@@ -447,13 +458,6 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
           </form>
         </div>
       </div>
-
-      <Notification 
-        show={notification.show}
-        message={notification.message}
-        type={notification.type}
-        onClose={() => setNotification(prev => ({ ...prev, show: false }))}
-      />
     </div>
   );
 };
