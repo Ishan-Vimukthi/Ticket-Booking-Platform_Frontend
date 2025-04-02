@@ -1,13 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { CartContext } from "../../contexts/CartContext";
+import { useCart } from "../../contexts/CartContext";
 import ColorSelector from "../../components/ecom_Components/porduct_components/ColorSelector";
 import SizeSelector from "../../components/ecom_Components/porduct_components/SizeSelector";
 import ShopNav from "../../components/ecom_Components/navigation/ShopNav";
 
 const ProductPage = () => {
-  const { id } = useParams(); // Get product ID from URL
-  const { addToCart } = useContext(CartContext);
+  const { id } = useParams();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
   const [selectedColor, setSelectedColor] = useState("White");
   const [selectedSize, setSelectedSize] = useState("M");
@@ -34,6 +34,7 @@ const ProductPage = () => {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
         <ShopNav/>
+        <div className="container mx-auto px-4 pt-16 pb-12"></div>
       {/* Product Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column: Image */}
