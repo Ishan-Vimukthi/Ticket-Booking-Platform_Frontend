@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { validateEventForm } from "./eventValidation";
+import { validateEventForm } from "../dashboard_Components/eventValidation";
 import Notification from "./Notification";
 
 const EditEventForm = ({ event, onClose, onUpdate }) => {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  
   const [formData, setFormData] = useState({
     eventName: "",
     eventDescription: "",
@@ -17,22 +19,12 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
       { type: "VVIP", price: 0 },
     ],
     image: null,
-    status: "",
+    status: "Upcoming",
     currentImage: ""
   });
 
-  const [errors, setErrors] = useState({
-    eventName: '',
-    eventDescription: '',
-    eventDate: '',
-    eventTime: '',
-    venue: '',
-    totalTickets: '',
-    ticketTypes: ['', '', ''],
-    image: '',
-    status: ''
-  });
-
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState({
     show: false,
     message: '',
@@ -41,103 +33,120 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
 
   useEffect(() => {
     if (event) {
+      const formattedDate = event.eventDate ? new Date(event.eventDate).toISOString().split('T')[0] : "";
       setFormData({
-        eventName: event.eventName,
-        eventDescription: event.eventDescription,
-        eventDate: event.eventDate.split('T')[0],
-        eventTime: event.eventTime,
-        venue: event.venue,
-        totalTickets: event.totalTickets,
-        ticketTypes: event.ticketTypes || [
-          { type: "General", price: 0 },
-          { type: "VIP", price: 0 },
-          { type: "VVIP", price: 0 },
-        ],
+        eventName: event.eventName || "",
+        eventDescription: event.eventDescription || "",
+        eventDate: formattedDate,
+        eventTime: event.eventTime || "",
+        venue: event.venue || "",
+        totalTickets: event.totalTickets?.toString() || "",
+        ticketTypes: event.ticketTypes || formData.ticketTypes,
         image: null,
-        currentImage: event.image,
-        status: event.status || ""
+        currentImage: event.image || "",
+        status: event.status || "Upcoming"
       });
     }
   }, [event]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
   const handleTicketTypeChange = (index, e) => {
     const { name, value } = e.target;
     const updatedTicketTypes = [...formData.ticketTypes];
-    updatedTicketTypes[index][name] = value;
-    setFormData({ ...formData, ticketTypes: updatedTicketTypes });
+    updatedTicketTypes[index] = { 
+      ...updatedTicketTypes[index], 
+      [name]: name === 'price' ? parseFloat(value) || 0 : value 
+    };
+    
+    setFormData(prev => ({ ...prev, ticketTypes: updatedTicketTypes }));
 
-    if (name === 'price' && errors.ticketTypes[index]) {
-      const newErrors = [...errors.ticketTypes];
-      newErrors[index] = '';
-      setErrors({ ...errors, ticketTypes: newErrors });
+    if (errors.ticketTypes?.[index]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        if (newErrors.ticketTypes) {
+          newErrors.ticketTypes[index] = '';
+        }
+        return newErrors;
+      });
     }
   };
 
   const handleImageChange = (e) => {
-    setFormData({ ...formData, image: e.target.files[0] });
-    if (errors.image) {
-      setErrors({ ...errors, image: '' });
+    const file = e.target.files[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      const maxSize = 10 * 1024 * 1024;
+      
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({ ...prev, image: 'Only JPG, PNG or GIF images are allowed' }));
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        setErrors(prev => ({ ...prev, image: 'Image size must be less than 10MB' }));
+        return;
+      }
+
+      setFormData(prev => ({ ...prev, image: file }));
+      setErrors(prev => ({ ...prev, image: '' }));
     }
   };
 
-  const venues = [
-    { id: "1", name: "Venue 1" },
-    { id: "2", name: "Venue 2" },
-    { id: "3", name: "Venue 3" },
-  ];
-
-  const statusOptions = [
-    { id: "1", name: "Upcoming" },
-    { id: "2", name: "Ongoing" },
-    { id: "3", name: "Past" },
-  ];
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // Pass true for isUpdate parameter to make image optional
-    const { errors: validationErrors, isValid } = validateEventForm(formData, true);
-    setErrors(validationErrors);
-
-    if (!isValid) {
-      setNotification({
-        show: true,
-        message: 'Please fix the errors in the form',
-        type: 'error'
-      });
+    const validationErrors = validateEventForm(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setIsSubmitting(false);
       return;
     }
 
-    const data = new FormData();
-    data.append("eventName", formData.eventName);
-    data.append("eventDescription", formData.eventDescription);
-    data.append("eventDate", formData.eventDate);
-    data.append("eventTime", formData.eventTime);
-    data.append("venue", formData.venue);
-    data.append("totalTickets", formData.totalTickets);
-    data.append("ticketTypes", JSON.stringify(formData.ticketTypes));
-    if (formData.image) {
-      data.append("image", formData.image);
-    }
-    data.append("status", formData.status);
-
     try {
-      const response = await axios.patch(
-        `http://localhost:3000/api/events/${event._id}`,
-        data,
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setNotification({
+          show: true,
+          message: 'You need to be logged in to update events',
+          type: 'error'
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("eventName", formData.eventName);
+      formDataToSend.append("eventDescription", formData.eventDescription);
+      formDataToSend.append("eventDate", formData.eventDate);
+      formDataToSend.append("eventTime", formData.eventTime);
+      formDataToSend.append("venue", formData.venue);
+      formDataToSend.append("totalTickets", formData.totalTickets);
+      formDataToSend.append("ticketTypes", JSON.stringify(formData.ticketTypes));
+      formDataToSend.append("status", formData.status);
+      
+      if (formData.image) {
+        formDataToSend.append("image", formData.image);
+      }
+
+      const response = await axios.put(
+        `${API_BASE}/api/events/${event._id}`,
+        formDataToSend,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            "Authorization": `Bearer ${token}`
+          }
         }
       );
-      
+
       setNotification({
         show: true,
         message: 'Event updated successfully!',
@@ -148,360 +157,304 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
         onUpdate(response.data);
         onClose();
       }, 1500);
-
     } catch (error) {
       console.error("Error updating event:", error);
+      let errorMessage = 'Failed to update event. Please try again.';
+      
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = 'Session expired. Please log in again.';
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data?.errors) {
+          setErrors(error.response.data.errors);
+          errorMessage = 'Please fix the form errors';
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       setNotification({
         show: true,
-        message: 'Failed to update event. Please try again.',
+        message: errorMessage,
         type: 'error'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_BASE}${imagePath}`;
+  };
+
   return (
-    <>
-      <div className="p-3 bg-white rounded-lg">
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div className="space-y-4">
-              {/* Event Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Event Name
-                </label>
-                <input
-                  type="text"
-                  name="eventName"
-                  placeholder="Enter event name"
-                  value={formData.eventName}
-                  onChange={handleChange}
-                  className={`mt-1 block w-full p-2 border ${
-                    errors.eventName ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                />
-                {errors.eventName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.eventName}</p>
-                )}
-              </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold text-gray-800">Edit Event</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+              disabled={isSubmitting}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-              {/* Event Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Event Description
-                </label>
-                <textarea
-                  name="eventDescription"
-                  placeholder="Enter a detailed description of the event..."
-                  value={formData.eventDescription}
-                  onChange={handleChange}
-                  rows={4}
-                  className={`mt-1 block w-full p-2 border ${
-                    errors.eventDescription ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                />
-                {errors.eventDescription && (
-                  <p className="mt-1 text-sm text-red-600">{errors.eventDescription}</p>
-                )}
-              </div>
-
-              {/* Date and Time */}
-              <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Event Date
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Name *
                   </label>
                   <input
-                    type="date"
-                    name="eventDate"
-                    value={formData.eventDate}
+                    type="text"
+                    name="eventName"
+                    value={formData.eventName}
                     onChange={handleChange}
-                    className={`mt-1 block w-full p-2 border ${
-                      errors.eventDate ? 'border-red-500' : 'border-gray-300'
-                    } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
+                    className={`w-full p-2 border rounded-md ${
+                      errors.eventName ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
                   />
-                  {errors.eventDate && (
-                    <p className="mt-1 text-sm text-red-600">{errors.eventDate}</p>
-                  )}
+                  {errors.eventName && <p className="mt-1 text-sm text-red-600">{errors.eventName}</p>}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Event Time
-                  </label>
-                  <input
-                    type="time"
-                    name="eventTime"
-                    value={formData.eventTime}
-                    onChange={handleChange}
-                    className={`mt-1 block w-full p-2 border ${
-                      errors.eventTime ? 'border-red-500' : 'border-gray-300'
-                    } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {errors.eventTime && (
-                    <p className="mt-1 text-sm text-red-600">{errors.eventTime}</p>
-                  )}
-                </div>
-              </div>
 
-              {/* Image Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Event Image (Optional)
-                </label>
-                {formData.currentImage && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-2">Current Image:</p>
-                    <img 
-                      src={`http://localhost:3000${formData.currentImage}`} 
-                      alt="Current event" 
-                      className="h-32 object-cover rounded"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Description
+                  </label>
+                  <textarea
+                    name="eventDescription"
+                    value={formData.eventDescription}
+                    onChange={handleChange}
+                    rows={4}
+                    className={`w-full p-2 border rounded-md ${
+                      errors.eventDescription ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.eventDescription && <p className="mt-1 text-sm text-red-600">{errors.eventDescription}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Event Date *
+                    </label>
+                    <input
+                      type="date"
+                      name="eventDate"
+                      value={formData.eventDate}
+                      onChange={handleChange}
+                      className={`w-full p-2 border rounded-md ${
+                        errors.eventDate ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      required
                     />
+                    {errors.eventDate && <p className="mt-1 text-sm text-red-600">{errors.eventDate}</p>}
                   </div>
-                )}
-                <div className={`flex justify-center px-6 pt-5 pb-6 border-2 ${
-                  errors.image ? 'border-red-500' : 'border-gray-300'
-                } border-dashed rounded-md`}>
-                  <div className="space-y-1 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="image-upload"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-                      >
-                        <span>Change image (optional)</span>
-                        <input
-                          id="image-upload"
-                          name="image"
-                          type="file"
-                          onChange={handleImageChange}
-                          className="sr-only"
-                        />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
-                    </div>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Event Time *
+                    </label>
+                    <input
+                      type="time"
+                      name="eventTime"
+                      value={formData.eventTime}
+                      onChange={handleChange}
+                      className={`w-full p-2 border rounded-md ${
+                        errors.eventTime ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      required
+                    />
+                    {errors.eventTime && <p className="mt-1 text-sm text-red-600">{errors.eventTime}</p>}
                   </div>
                 </div>
-                {errors.image && (
-                  <p className="mt-1 text-sm text-red-600">{errors.image}</p>
-                )}
-              </div>
-            </div>
 
-            {/* Right Column */}
-            <div className="space-y-4">
-              {/* Venue and Total Tickets */}
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Venue
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Image
+                  </label>
+                  {formData.currentImage && (
+                    <div className="mb-3">
+                      <p className="text-sm text-gray-500 mb-1">Current Image:</p>
+                      <img 
+                        src={getImageUrl(formData.currentImage)} 
+                        alt="Current event" 
+                        className="h-40 w-full object-cover rounded border"
+                        onError={(e) => {
+                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgNDAwIDIwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSI+RXZlbnQgSW1hZ2U8L3RleHQ+PC9zdmc+';
+                          e.target.className = 'h-40 w-full object-contain p-4 bg-gray-100 rounded border';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className={`border-2 border-dashed rounded-md p-4 ${
+                    errors.image ? 'border-red-500' : 'border-gray-300'
+                  }`}>
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <svg className="h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <div className="flex text-sm text-gray-600">
+                        <label className="relative cursor-pointer">
+                          <span className="font-medium text-blue-600 hover:text-blue-500">
+                            Upload new image
+                          </span>
+                          <input
+                            type="file"
+                            name="image"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="sr-only"
+                          />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                      </div>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                  </div>
+                  {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
+                  {formData.image && (
+                    <p className="mt-1 text-sm text-green-600">New image selected: {formData.image.name}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Venue *
+                    </label>
+                    <input
+                      type="text"
+                      name="venue"
+                      value={formData.venue}
+                      onChange={handleChange}
+                      className={`w-full p-2 border rounded-md ${
+                        errors.venue ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      required
+                    />
+                    {errors.venue && <p className="mt-1 text-sm text-red-600">{errors.venue}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Total Tickets *
+                    </label>
+                    <input
+                      type="number"
+                      name="totalTickets"
+                      min="1"
+                      value={formData.totalTickets}
+                      onChange={handleChange}
+                      className={`w-full p-2 border rounded-md ${
+                        errors.totalTickets ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      required
+                    />
+                    {errors.totalTickets && <p className="mt-1 text-sm text-red-600">{errors.totalTickets}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status *
                   </label>
                   <select
-                    name="venue"
-                    value={formData.venue}
+                    name="status"
+                    value={formData.status}
                     onChange={handleChange}
-                    className={`mt-1 block w-full p-2 border ${
-                      errors.venue ? 'border-red-500' : 'border-gray-300'
-                    } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
+                    className={`w-full p-2 border rounded-md ${
+                      errors.status ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
                   >
-                    <option value="">Select Venue</option>
-                    {venues.map((venue) => (
-                      <option key={venue.id} value={venue.name}>
-                        {venue.name}
-                      </option>
-                    ))}
+                    <option value="Upcoming">Upcoming</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
                   </select>
-                  {errors.venue && (
-                    <p className="mt-1 text-sm text-red-600">{errors.venue}</p>
-                  )}
+                  {errors.status && <p className="mt-1 text-sm text-red-600">{errors.status}</p>}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Total Tickets
-                  </label>
-                  <input
-                    type="number"
-                    name="totalTickets"
-                    placeholder="Enter total tickets"
-                    value={formData.totalTickets}
-                    onChange={handleChange}
-                    className={`mt-1 block w-full p-2 border ${
-                      errors.totalTickets ? 'border-red-500' : 'border-gray-300'
-                    } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {errors.totalTickets && (
-                    <p className="mt-1 text-sm text-red-600">{errors.totalTickets}</p>
-                  )}
-                </div>
-              </div>
 
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className={`mt-1 block w-full p-2 border ${
-                    errors.status ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                >
-                  <option value="">Select Status</option>
-                  {statusOptions.map((status) => (
-                    <option key={status.id} value={status.name}>
-                      {status.name}
-                    </option>
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Ticket Types *</h3>
+                  
+                  {formData.ticketTypes.map((ticket, index) => (
+                    <div key={index}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {ticket.type} Ticket
+                      </label>
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          name="type"
+                          value={ticket.type}
+                          readOnly
+                          className="w-1/2 p-2 border border-gray-300 rounded-md bg-gray-100"
+                        />
+                        <div className="w-1/2">
+                          <input
+                            type="number"
+                            name="price"
+                            min="0"
+                            step="0.01"
+                            value={ticket.price}
+                            onChange={(e) => handleTicketTypeChange(index, e)}
+                            className={`w-full p-2 border rounded-md ${
+                              errors.ticketTypes?.[index] ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                            required
+                          />
+                          {errors.ticketTypes?.[index] && (
+                            <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[index]}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </select>
-                {errors.status && (
-                  <p className="mt-1 text-sm text-red-600">{errors.status}</p>
-                )}
-              </div>
-
-              {/* Ticket Types */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-700">Ticket Types</h3>
-                
-                {/* General Ticket */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    General Ticket
-                  </label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      name="type"
-                      value="General"
-                      readOnly
-                      className="w-1/2 p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <div className="w-1/2">
-                      <input
-                        type="number"
-                        name="price"
-                        placeholder="Price"
-                        value={formData.ticketTypes[0].price}
-                        onChange={(e) => handleTicketTypeChange(0, e)}
-                        className={`w-full p-2 border ${
-                          errors.ticketTypes[0] ? 'border-red-500' : 'border-gray-300'
-                        } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                      />
-                      {errors.ticketTypes[0] && (
-                        <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[0]}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* VIP Ticket */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    VIP Ticket
-                  </label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      name="type"
-                      value="VIP"
-                      readOnly
-                      className="w-1/2 p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <div className="w-1/2">
-                      <input
-                        type="number"
-                        name="price"
-                        placeholder="Price"
-                        value={formData.ticketTypes[1].price}
-                        onChange={(e) => handleTicketTypeChange(1, e)}
-                        className={`w-full p-2 border ${
-                          errors.ticketTypes[1] ? 'border-red-500' : 'border-gray-300'
-                        } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                      />
-                      {errors.ticketTypes[1] && (
-                        <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[1]}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* VVIP Ticket */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    VVIP Ticket
-                  </label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      name="type"
-                      value="VVIP"
-                      readOnly
-                      className="w-1/2 p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <div className="w-1/2">
-                      <input
-                        type="number"
-                        name="price"
-                        placeholder="Price"
-                        value={formData.ticketTypes[2].price}
-                        onChange={(e) => handleTicketTypeChange(2, e)}
-                        className={`w-full p-2 border ${
-                          errors.ticketTypes[2] ? 'border-red-500' : 'border-gray-300'
-                        } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                      />
-                      {errors.ticketTypes[2] && (
-                        <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[2]}</p>
-                      )}
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Submit and Cancel Buttons */}
-          <div className="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Update Event
-            </button>
-          </div>
-        </form>
+            <div className="mt-8 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
+              >
+                {isSubmitting ? 'Updating...' : 'Update Event'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
-      {/* Notification */}
-      {notification.show && (
-        <Notification 
-          message={notification.message}
-          type={notification.type}
-          onClose={() => setNotification({...notification, show: false})}
-        />
-      )}
-    </>
+      <Notification 
+        show={notification.show}
+        message={notification.message}
+        type={notification.type}
+        onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+      />
+    </div>
   );
 };
 
