@@ -1,6 +1,7 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../../../contexts/CartContext';
+import { Link } from 'react-router-dom';
 
 const CartSlider = () => {
   const { 
@@ -15,10 +16,12 @@ const CartSlider = () => {
   return (
     <>
       {/* Blurred Background Overlay */}
-      <div 
-        className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-md transition-opacity ${isCartOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
-        onClick={closeCart}
-      ></div>
+      {isCartOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-md transition-opacity"
+          onClick={closeCart}
+        ></div>
+      )}
 
       {/* Cart Panel */}
       <div 
@@ -114,9 +117,14 @@ const CartSlider = () => {
               Shipping calculated at checkout
             </p>
             
-            <button className="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors font-medium">
-              CHECKOUT • LKR {cartTotal.toLocaleString()}
-            </button>
+            <div className="flex justify-center"> {/* Added wrapper div for centering */}
+              <Link 
+                to="/checkout" 
+                className="bg-black text-center text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium w-full max-w-xs" 
+              >
+                CHECKOUT • LKR {cartTotal.toLocaleString()}
+              </Link>
+            </div>
             
             <button className="w-full mt-2 text-center underline text-sm text-gray-500 hover:text-black">
               View cart
