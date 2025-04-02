@@ -2,6 +2,8 @@ import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../../../contexts/CartContext';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const CartSlider = () => {
   const { 
@@ -12,6 +14,17 @@ const CartSlider = () => {
     isCartOpen,
     closeCart 
   } = useCart();
+
+  const handleCheckoutClick = (e) => {
+    if (cartItems.length === 0) {
+      e.preventDefault();
+      toast.error('Please add some products to your cart first', {
+        position: "top-right",
+        autoClose: 3000,
+        style: { marginTop: '4rem' }
+      });
+    }
+  };
 
   return (
     <>
@@ -48,7 +61,7 @@ const CartSlider = () => {
             ) : (
               <ul className="space-y-6">
                 {cartItems.map((item) => (
-                  <li key={item.id} className="pb-6 border-b border-gray-100">
+                  <li key={`${item.id}-${item.size}`} className="pb-6 border-b border-gray-100">
                     <div className="flex">
                       <img 
                         src={item.image} 
@@ -61,16 +74,11 @@ const CartSlider = () => {
                           <p className="ml-4 font-bold">LKR {item.price.toLocaleString()}</p>
                         </div>
                         
-                        {/* Display Color and Size */}
-                        <div className="flex items-center mt-1 space-x-4">
+                        {/* Display Size */}
+                        <div className="mt-1">
                           <p className="text-sm text-gray-500">
-                            Color: <span className="font-medium">{item.color || 'Black'}</span>
+                            Size: <span className="font-medium">{item.size || 'Not specified'}</span>
                           </p>
-                          {item.size && (
-                            <p className="text-sm text-gray-500">
-                              Size: <span className="font-medium">{item.size}</span>
-                            </p>
-                          )}
                         </div>
                         
                         <div className="mt-3 flex items-center justify-between">
@@ -117,13 +125,23 @@ const CartSlider = () => {
               Shipping calculated at checkout
             </p>
             
-            <div className="flex justify-center"> {/* Added wrapper div for centering */}
-              <Link 
-                to="/checkout" 
-                className="bg-black text-center text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium w-full max-w-xs" 
-              >
-                CHECKOUT • LKR {cartTotal.toLocaleString()}
-              </Link>
+            <div className="flex justify-center">
+              {cartItems.length > 0 ? (
+                <Link 
+                  to="/checkout" 
+                  className="bg-black text-center text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium w-full max-w-xs" 
+                >
+                  CHECKOUT • LKR {cartTotal.toLocaleString()}
+                </Link>
+              ) : (
+                <button
+                  onClick={handleCheckoutClick}
+                  className="bg-gray-400 text-center text-white px-6 py-3 rounded-md font-medium w-full max-w-xs cursor-not-allowed"
+                  disabled
+                >
+                  CHECKOUT • LKR 0
+                </button>
+              )}
             </div>
             
             <button className="w-full mt-2 text-center underline text-sm text-gray-500 hover:text-black">

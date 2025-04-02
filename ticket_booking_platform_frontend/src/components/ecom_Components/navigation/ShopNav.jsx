@@ -6,9 +6,8 @@ import { useCart } from '../../../contexts/CartContext';
 const ShopNav = ({ onSearch }) => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
-  const { cartCount, openCart } = useCart();
+  const { cartCount, openCart, isCartOpen } = useCart();
 
-  // Check if current route is product page
   const isProductPage = location.pathname.includes('/product/');
 
   useEffect(() => {
@@ -26,13 +25,10 @@ const ShopNav = ({ onSearch }) => {
   }, [scrolled, isProductPage]);
 
   return (
-    <nav className={`fixed w-full z-30 transition-all duration-300 ${
-      isProductPage ? 'bg-black shadow-md' : 
-      scrolled ? 'bg-black shadow-md' : 'bg-transparent'
-    }`}>
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Left Section */}
+    <nav className={`fixed w-full z-50 h-16 bg-black shadow-md transition-all duration-300`}>
+      <div className="container mx-auto px-4 h-full">
+        <div className="flex items-center justify-between h-full">
+          {/* Left Section - Back button on product page */}
           <div className="flex items-center space-x-4">
             {isProductPage ? (
               <Link 
@@ -60,25 +56,14 @@ const ShopNav = ({ onSearch }) => {
             )}
           </div>
 
-          {/* Center Section - Only show on shop page */}
-          {!isProductPage && (
-            <div className="hidden md:flex space-x-6">
-              <Link 
-                to="/shop/men" 
-                className="px-3 py-2 text-white hover:text-gray-300 font-medium transition-colors"
-              >
-                FOR HIM
-              </Link>
-              <Link 
-                to="/shop/women" 
-                className="px-3 py-2 text-white hover:text-gray-300 font-medium transition-colors"
-              >
-                FOR HER
-              </Link>
+          {/* Center Section - Product name on product page */}
+          {isProductPage && (
+            <div className="hidden md:flex text-white font-medium truncate max-w-xs">
+              Acid Wash Jagger {/* Dynamic product name would go here */}
             </div>
           )}
 
-          {/* Right Section */}
+          {/* Right Section - Cart icon */}
           <div className="flex items-center">
             <button 
               onClick={openCart}
@@ -94,9 +79,9 @@ const ShopNav = ({ onSearch }) => {
           </div>
         </div>
 
-        {/* Mobile Category Links - Only show on shop page */}
+        {/* Mobile category links - only on shop page */}
         {!isProductPage && (
-          <div className={`md:hidden flex justify-center space-x-4 pb-2 ${
+          <div className={`md:hidden flex justify-center space-x-4 py-2 ${
             scrolled ? 'bg-black' : 'bg-transparent'
           }`}>
             <Link 

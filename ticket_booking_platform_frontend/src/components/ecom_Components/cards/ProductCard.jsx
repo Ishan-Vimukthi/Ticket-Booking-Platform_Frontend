@@ -1,6 +1,8 @@
 import { useCart } from '../../../contexts/CartContext';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
@@ -8,11 +10,33 @@ const ProductCard = ({ product }) => {
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      alert('Please select a size first');
+      toast.error('Please select a size first', {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       return;
     }
     addToCart({ ...product, size: selectedSize });
+    toast.success('Added to cart!', {
+    position: "top-right",
+    autoClose: 2000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "light",
+    className:"!top-16",
+    toastClassName:"!mt-4"
+  });
   };
+
 
   return (
     
