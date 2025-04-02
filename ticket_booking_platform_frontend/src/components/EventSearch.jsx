@@ -1,7 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { Search } from "lucide-react";
 
-const EventSearch = () => {
+const EventSearch = ({ setSearchQuery }) => {
+  const [query, setQuery] = useState(""); // Single state for input
+
+  const handleSearch = () => {
+    setSearchQuery(query); // Pass the query for searching
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="bg-blue-600 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,9 +35,15 @@ const EventSearch = () => {
           <input
             type="text"
             placeholder="Search by event name or venue"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown} // Handle Enter key
             className="w-full py-3 px-4 focus:outline-none text-gray-800"
           />
-          <button className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 font-semibold transition">
+          <button
+            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 font-semibold transition"
+            onClick={handleSearch}
+          >
             Search
           </button>
         </div>

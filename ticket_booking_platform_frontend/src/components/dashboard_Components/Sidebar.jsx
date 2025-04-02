@@ -22,8 +22,8 @@ const Sidebar = () => {
       path: "/seat-map", 
       icon: <Map size={20} /> },
     
-    { name: "Manage Users", 
-      path: "/manage-users", 
+    { name: "Edit Profile", 
+      path: "/edit-profile", 
       icon: <Edit size={20} /> },
   ];
 
@@ -31,7 +31,7 @@ const Sidebar = () => {
     <div>
       {/* Sidebar Toggle Button */}
       <button
-        className="fixed top-4 left-4 z-50 p-2 bg-blue-500 text-white rounded-full md:hidden"
+        className="fixed top-4 left-4 z-50 p-2 bg-blue-600 text-white rounded-full md:hidden"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -44,7 +44,7 @@ const Sidebar = () => {
         } md:relative md:translate-x-0 md:w-80`}
       >
         <NavLink to="/">
-          <div className="text-3xl font-extrabold text-blue-500 mb-10 pl-12">
+          <div className="text-3xl font-extrabold text-blue-600 mb-10 pl-12">
             BigIdea
           </div>
         </NavLink>
@@ -53,9 +53,9 @@ const Sidebar = () => {
             <NavLink
               key={item.name}
               to={item.path}
-              className={`flex items-center gap-4 py-5 px-6 rounded-xl m-2 font-bold text-black hover:bg-gray-200 ${
+              className={`flex items-center gap-4 py-5 px-6 rounded-xl m-2 font-bold text-black hover:bg-gray-400 ${
                 location.pathname === item.path
-                  ? "bg-blue-500 hover:bg-blue-500 text-white"
+                  ? "bg-blue-600 hover:bg-blue-500 text-white"
                   : ""
               }`}
               onClick={() => setIsOpen(false)} // Close sidebar on item click (mobile)
@@ -66,7 +66,7 @@ const Sidebar = () => {
           ))}
         </nav>
 
-        <button className=" flex items-center gap-4 py-3 px-13 md:px-20 lg:px-20 rounded-xl m-5 font-bold text-white bg-blue-500 hover:bg-blue-600">
+        <button className=" flex items-center gap-4 py-3 px-13 md:px-20 lg:px-20 rounded-xl m-5 font-bold text-white bg-blue-600 hover:bg-blue-700">
           Sign Out
         </button>
       </div>

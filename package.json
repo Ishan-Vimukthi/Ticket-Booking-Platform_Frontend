@@ -1,5 +1,10 @@
 {
   "dependencies": {
-    "react-toastify": "^11.0.5"
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.8.4",
+    "react-hook-form": "^7.55.0",
+    "react-toastify": "^11.0.5",
+    "recharts": "^2.15.1"
   }
 }
