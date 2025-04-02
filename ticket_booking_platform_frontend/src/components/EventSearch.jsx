@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Search } from "lucide-react";
 
-const EventSearch = ({ searchQuery, setSearchQuery }) => {
-  const [tempQuery, setTempQuery] = useState(searchQuery); // Temporary state for input
+const EventSearch = ({ setSearchQuery }) => {
+  const [query, setQuery] = useState(""); // Single state for input
 
   const handleSearch = () => {
-    setSearchQuery(tempQuery); // Update search state in Home
+    setSearchQuery(query); // Pass the query for searching
   };
 
   const handleKeyDown = (e) => {
@@ -35,8 +35,8 @@ const EventSearch = ({ searchQuery, setSearchQuery }) => {
           <input
             type="text"
             placeholder="Search by event name or venue"
-            value={tempQuery}
-            onChange={(e) => setTempQuery(e.target.value)}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown} // Handle Enter key
             className="w-full py-3 px-4 focus:outline-none text-gray-800"
           />
