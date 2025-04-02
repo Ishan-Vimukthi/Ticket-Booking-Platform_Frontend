@@ -204,8 +204,8 @@ const EventList = () => {
                   />
                 ) : (
                   <img
-                    src={fallbackImage}
-                    alt="Event placeholder"
+                    src={event.image || fallbackImage}
+                    alt={event.eventName}
                     className="w-full h-full object-contain p-4"
                   />
                 )}
