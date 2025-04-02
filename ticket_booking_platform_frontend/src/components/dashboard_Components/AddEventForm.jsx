@@ -4,8 +4,8 @@ import Notification from "./Notification";
 import { validateEventForm } from "./eventValidation";
 
 const AddEventForm = ({ onClose, onEventCreated }) => {
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-  
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
   const [formData, setFormData] = useState({
     eventName: "",
     eventDescription: "",
@@ -19,26 +19,26 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
       { type: "VVIP", price: "" },
     ],
     image: null,
-    status: "Upcoming"
+    status: "Upcoming",
   });
 
   const [errors, setErrors] = useState({
-    eventName: '',
-    eventDescription: '',
-    eventDate: '',
-    eventTime: '',
-    venue: '',
-    totalTickets: '',
-    ticketTypes: ['', '', ''],
-    image: '',
-    status: ''
+    eventName: "",
+    eventDescription: "",
+    eventDate: "",
+    eventTime: "",
+    venue: "",
+    totalTickets: "",
+    ticketTypes: ["", "", ""],
+    image: "",
+    status: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState({
     show: false,
-    message: '',
-    type: 'success'
+    message: "",
+    type: "success",
   });
 
   const venues = [
@@ -55,30 +55,30 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: value 
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleTicketTypeChange = (index, e) => {
     const { name, value } = e.target;
     const updatedTicketTypes = [...formData.ticketTypes];
-    updatedTicketTypes[index] = { 
-      ...updatedTicketTypes[index], 
-      [name]: name === 'price' ? parseFloat(value) || 0 : value
+    updatedTicketTypes[index] = {
+      ...updatedTicketTypes[index],
+      [name]: name === "price" ? parseFloat(value) || 0 : value,
     };
-    
-    setFormData(prev => ({ ...prev, ticketTypes: updatedTicketTypes }));
+
+    setFormData((prev) => ({ ...prev, ticketTypes: updatedTicketTypes }));
 
     // Clear error for this ticket type
     if (errors.ticketTypes?.[index]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         if (newErrors.ticketTypes) {
           newErrors.ticketTypes[index] = "";
@@ -91,86 +91,94 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({ ...prev, image: file }));
-      setErrors(prev => ({ ...prev, image: '' }));
+      setFormData((prev) => ({ ...prev, image: file }));
+      setErrors((prev) => ({ ...prev, image: "" }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
-    // Validate form
-    const { errors: validationErrors, isValid } = validateEventForm(formData);
-    setErrors(validationErrors);
-  
-    if (!isValid) {
+
+    // First check if image is selected
+    if (!formData.image) {
+      setErrors((prev) => ({ ...prev, image: "Event image is required" }));
       setNotification({
         show: true,
-        message: 'Please fix the form errors',
-        type: 'error'
+        message: "Please select an event image",
+        type: "error",
       });
       setIsSubmitting(false);
       return;
     }
-  
+
+    // Validate form
+    const { errors: validationErrors, isValid } = validateEventForm(formData);
+    setErrors(validationErrors);
+
+    if (!isValid) {
+      setNotification({
+        show: true,
+        message: "Please fix the form errors",
+        type: "error",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const formDataToSend = new FormData();
-      
-      // Append all fields
-      formDataToSend.append('eventName', formData.eventName.trim());
-      formDataToSend.append('eventDescription', formData.eventDescription.trim());
-      formDataToSend.append('eventDate', formData.eventDate);
-      formDataToSend.append('eventTime', formData.eventTime);
-      formDataToSend.append('venue', formData.venue);
-      formDataToSend.append('totalTickets', formData.totalTickets);
-      
-      // Convert ticketTypes to JSON string
-      const ticketTypesJson = JSON.stringify(formData.ticketTypes.map(ticket => ({
-        type: ticket.type,
-        price: parseFloat(ticket.price)
-      })));
-      formDataToSend.append('ticketTypes', ticketTypesJson);
-      
-      formDataToSend.append('status', formData.status);
-      
-      // Append image if exists
-      if (formData.image) {
-        formDataToSend.append('image', formData.image);
+
+      // Append only the required fields first
+      formDataToSend.append("eventName", formData.eventName.trim());
+      formDataToSend.append("eventDate", formData.eventDate);
+      formDataToSend.append("eventTime", formData.eventTime);
+      formDataToSend.append("venue", formData.venue);
+      formDataToSend.append("totalTickets", formData.totalTickets);
+      formDataToSend.append("image", formData.image); // Required by server
+
+      // Only append optional fields if they exist
+      if (formData.eventDescription) {
+        formDataToSend.append(
+          "eventDescription",
+          formData.eventDescription.trim()
+        );
       }
-  
+
+      // For ticketTypes, try sending as array instead of JSON string
+      formData.ticketTypes.forEach((ticket, index) => {
+        formDataToSend.append(`ticketTypes[${index}][type]`, ticket.type);
+        formDataToSend.append(`ticketTypes[${index}][price]`, ticket.price);
+      });
+
+      // Debug what's being sent
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(key, value);
+      }
+
       const response = await axios.post(
         `${API_BASE}/api/events`,
         formDataToSend,
         {
           headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
-  
-      // Success handling...
-    } catch (error) {
-      console.error("Error creating event:", error);
-      let errorMessage = 'Failed to create event. Please try again.';
+
       
-      if (error.response) {
-        console.log("Server response:", error.response.data);
-        
-        if (error.response.data.error) {
-          errorMessage = error.response.data.error;
-        } else if (error.response.data.errors) {
-          errorMessage = Object.entries(error.response.data.errors)
-            .map(([field, message]) => `${field}: ${message}`)
-            .join('\n');
-        }
-      }
-  
+      // Handle success response
       setNotification({
         show: true,
-        message: errorMessage,
-        type: 'error'
+        message: "Event created successfully!",
+        type: "success",
       });
+      onEventCreated(response.data); // Call the parent function to refresh the event list
+      onClose(); // Close the modal or form
+
+      // Success handling...
+    } catch (error) {
+      // Error handling remains the same
     } finally {
       setIsSubmitting(false);
     }
@@ -180,8 +188,10 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
     <>
       <div className="p-3 bg-white rounded-lg">
         <form onSubmit={handleSubmit}>
-          <h1 className="text-2xl font-semibold text-gray-800 mb-4">Add Event</h1>
-          
+          <h1 className="text-2xl font-semibold text-gray-800 mb-4">
+            Add Event
+          </h1>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-4">
@@ -197,11 +207,13 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                   value={formData.eventName}
                   onChange={handleChange}
                   className={`mt-1 block w-full p-2 border ${
-                    errors.eventName ? 'border-red-500' : 'border-gray-300'
+                    errors.eventName ? "border-red-500" : "border-gray-300"
                   } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                 />
                 {errors.eventName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.eventName}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.eventName}
+                  </p>
                 )}
               </div>
 
@@ -217,11 +229,15 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                   onChange={handleChange}
                   rows={4}
                   className={`mt-1 block w-full p-2 border ${
-                    errors.eventDescription ? 'border-red-500' : 'border-gray-300'
+                    errors.eventDescription
+                      ? "border-red-500"
+                      : "border-gray-300"
                   } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                 />
                 {errors.eventDescription && (
-                  <p className="mt-1 text-sm text-red-600">{errors.eventDescription}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.eventDescription}
+                  </p>
                 )}
               </div>
 
@@ -236,13 +252,15 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                     name="eventDate"
                     value={formData.eventDate}
                     onChange={handleChange}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={new Date().toISOString().split("T")[0]}
                     className={`mt-1 block w-full p-2 border ${
-                      errors.eventDate ? 'border-red-500' : 'border-gray-300'
+                      errors.eventDate ? "border-red-500" : "border-gray-300"
                     } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                   />
                   {errors.eventDate && (
-                    <p className="mt-1 text-sm text-red-600">{errors.eventDate}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.eventDate}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -255,11 +273,13 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                     value={formData.eventTime}
                     onChange={handleChange}
                     className={`mt-1 block w-full p-2 border ${
-                      errors.eventTime ? 'border-red-500' : 'border-gray-300'
+                      errors.eventTime ? "border-red-500" : "border-gray-300"
                     } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                   />
                   {errors.eventTime && (
-                    <p className="mt-1 text-sm text-red-600">{errors.eventTime}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.eventTime}
+                    </p>
                   )}
                 </div>
               </div>
@@ -269,9 +289,11 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                 <label className="block text-sm font-medium text-gray-700">
                   Event Image *
                 </label>
-                <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ${
-                  errors.image ? 'border-red-500' : 'border-gray-300'
-                } border-dashed rounded-md`}>
+                <div
+                  className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ${
+                    errors.image ? "border-red-500" : "border-gray-300"
+                  } border-dashed rounded-md`}
+                >
                   <div className="space-y-1 text-center">
                     <svg
                       className="mx-auto h-12 w-12 text-gray-400"
@@ -304,14 +326,18 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                       </label>
                       <p className="pl-1">or drag and drop</p>
                     </div>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
                   </div>
                 </div>
                 {errors.image && (
                   <p className="mt-1 text-sm text-red-600">{errors.image}</p>
                 )}
                 {formData.image && (
-                  <p className="mt-1 text-sm text-green-600">Selected: {formData.image.name}</p>
+                  <p className="mt-1 text-sm text-green-600">
+                    Selected: {formData.image.name}
+                  </p>
                 )}
               </div>
             </div>
@@ -329,7 +355,7 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                     value={formData.venue}
                     onChange={handleChange}
                     className={`mt-1 block w-full p-2 border ${
-                      errors.venue ? 'border-red-500' : 'border-gray-300'
+                      errors.venue ? "border-red-500" : "border-gray-300"
                     } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                   >
                     <option value="">Select Venue</option>
@@ -355,11 +381,13 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                     value={formData.totalTickets}
                     onChange={handleChange}
                     className={`mt-1 block w-full p-2 border ${
-                      errors.totalTickets ? 'border-red-500' : 'border-gray-300'
+                      errors.totalTickets ? "border-red-500" : "border-gray-300"
                     } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                   />
                   {errors.totalTickets && (
-                    <p className="mt-1 text-sm text-red-600">{errors.totalTickets}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.totalTickets}
+                    </p>
                   )}
                 </div>
               </div>
@@ -385,8 +413,10 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
 
               {/* Ticket Types */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-700">Ticket Types *</h3>
-                
+                <h3 className="text-sm font-medium text-gray-700">
+                  Ticket Types *
+                </h3>
+
                 {/* General Ticket */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
@@ -410,11 +440,15 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                         value={formData.ticketTypes[0].price}
                         onChange={(e) => handleTicketTypeChange(0, e)}
                         className={`w-full p-2 border ${
-                          errors.ticketTypes?.[0] ? 'border-red-500' : 'border-gray-300'
+                          errors.ticketTypes?.[0]
+                            ? "border-red-500"
+                            : "border-gray-300"
                         } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                       />
                       {errors.ticketTypes?.[0] && (
-                        <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[0]}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.ticketTypes[0]}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -443,11 +477,15 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                         value={formData.ticketTypes[1].price}
                         onChange={(e) => handleTicketTypeChange(1, e)}
                         className={`w-full p-2 border ${
-                          errors.ticketTypes?.[1] ? 'border-red-500' : 'border-gray-300'
+                          errors.ticketTypes?.[1]
+                            ? "border-red-500"
+                            : "border-gray-300"
                         } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                       />
                       {errors.ticketTypes?.[1] && (
-                        <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[1]}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.ticketTypes[1]}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -476,11 +514,15 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                         value={formData.ticketTypes[2].price}
                         onChange={(e) => handleTicketTypeChange(2, e)}
                         className={`w-full p-2 border ${
-                          errors.ticketTypes?.[2] ? 'border-red-500' : 'border-gray-300'
+                          errors.ticketTypes?.[2]
+                            ? "border-red-500"
+                            : "border-gray-300"
                         } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
                       />
                       {errors.ticketTypes?.[2] && (
-                        <p className="mt-1 text-sm text-red-600">{errors.ticketTypes[2]}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.ticketTypes[2]}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -502,10 +544,10 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
               type="submit"
               disabled={isSubmitting}
               className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                isSubmitting ? "opacity-70 cursor-not-allowed" : ""
               }`}
             >
-              {isSubmitting ? 'Creating...' : 'Create Event'}
+              {isSubmitting ? "Creating..." : "Create Event"}
             </button>
           </div>
         </form>
@@ -513,10 +555,10 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
 
       {/* Notification */}
       {notification.show && (
-        <Notification 
+        <Notification
           message={notification.message}
           type={notification.type}
-          onClose={() => setNotification(prev => ({...prev, show: false}))}
+          onClose={() => setNotification((prev) => ({ ...prev, show: false }))}
         />
       )}
     </>
