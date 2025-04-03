@@ -174,12 +174,13 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
         type: "success",
       });
       onEventCreated(response.data); // Call the parent function to refresh the event list
-      onClose(); // Close the modal or form
-
+      
       // Success handling...
     } catch (error) {
       // Error handling remains the same
     } finally {
+      onClose(); // Close the modal or form
+      window.location.reload();
       setIsSubmitting(false);
     }
   };
