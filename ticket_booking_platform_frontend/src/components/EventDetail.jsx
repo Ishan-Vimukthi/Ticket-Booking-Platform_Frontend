@@ -109,7 +109,7 @@ const EventDetail = () => {
                     event.ticketTypes.map((ticket, index) => (
                       <tr key={index} className="border-b border-gray-200 last:border-b-0">
                         <td className="py-3 text-gray-700">{ticket.type}</td>
-                        <td className="py-3 text-right font-semibold text-blue-600">{ticket.price} LKR</td>
+                        <td className="py-3 text-right font-semibold text-blue-600">{ticket.price} USD</td>
                       </tr>
                     ))
                   ) : (
