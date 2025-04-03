@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Notification from "./Notification";
 import { validateEventForm } from "./eventValidation";
 
-const AddEventForm = ({ onClose, onEventCreated }) => {
+const AddEventForm = ({ onClose, onEventCreated = () => {} }) => {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
   const [formData, setFormData] = useState({
@@ -41,11 +41,10 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
     type: "success",
   });
 
-  const venues = [
-    { id: "1", name: "Venue 1" },
-    { id: "2", name: "Venue 2" },
-    { id: "3", name: "Venue 3" },
-  ];
+  // State for venues from backend
+  const [venues, setVenues] = useState([]);
+  const [isLoadingVenues, setIsLoadingVenues] = useState(true);
+  const [venueError, setVenueError] = useState("");
 
   const statusOptions = [
     { id: "1", name: "Upcoming" },
@@ -53,12 +52,67 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
     { id: "3", name: "Completed" },
   ];
 
+  // Fetch venues from backend on component mount
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/api/venues`);
+        
+        // Check if response.data exists and is an array
+        if (!response.data) {
+          throw new Error("No data received from venues API");
+        }
+
+        // Check if data is in the expected format
+        if (!Array.isArray(response.data)) {
+          // Handle case where data might be nested (common with some APIs)
+          if (response.data.data && Array.isArray(response.data.data)) {
+            setVenues(response.data.data);
+          } else if (response.data.venues && Array.isArray(response.data.venues)) {
+            setVenues(response.data.venues);
+          } else {
+            throw new Error("Invalid venues data format");
+          }
+        } else {
+          setVenues(response.data);
+        }
+
+        setVenueError("");
+      } catch (error) {
+        console.error("Error fetching venues:", error);
+        setVenues([]);
+        setVenueError(error.message || "Failed to load venues");
+        setNotification({
+          show: true,
+          message: error.message || "Failed to load venues",
+          type: "error",
+        });
+      } finally {
+        setIsLoadingVenues(false);
+      }
+    };
+
+    fetchVenues();
+  }, [API_BASE]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    // If venue is changed, update totalTickets
+    if (name === "venue") {
+      const selectedVenue = venues.find(v => v._id === value);
+      if (selectedVenue) {
+        setFormData(prev => ({
+          ...prev,
+          totalTickets: selectedVenue.totalSeats || "",
+          venue: value
+        }));
+      }
+    }
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -151,11 +205,6 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
         formDataToSend.append(`ticketTypes[${index}][price]`, ticket.price);
       });
 
-      // Debug what's being sent
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(key, value);
-      }
-
       const response = await axios.post(
         `${API_BASE}/api/events`,
         formDataToSend,
@@ -165,7 +214,6 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
           },
         }
       );
-
       
       // Handle success response
       setNotification({
@@ -173,15 +221,24 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
         message: "Event created successfully!",
         type: "success",
       });
-      onEventCreated(response.data); // Call the parent function to refresh the event list
       
-      // Success handling...
+      // Call the onEventCreated callback with the response data
+      onEventCreated(response.data);
+      
     } catch (error) {
-      // Error handling remains the same
+      console.error("Error creating event:", error);
+      setNotification({
+        show: true,
+        message: error.response?.data?.message || "Failed to create event",
+        type: "error",
+      });
     } finally {
-      onClose(); // Close the modal or form
-      window.location.reload();
       setIsSubmitting(false);
+      window.location.reload();
+      // Only close the form if there was no error
+      if (!notification.show || notification.type === "success") {
+        onClose();
+      }
     }
   };
 
@@ -351,23 +408,35 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
                   <label className="block text-sm font-medium text-gray-700">
                     Venue *
                   </label>
-                  <select
-                    name="venue"
-                    value={formData.venue}
-                    onChange={handleChange}
-                    className={`mt-1 block w-full p-2 border ${
-                      errors.venue ? "border-red-500" : "border-gray-300"
-                    } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
-                  >
-                    <option value="">Select Venue</option>
-                    {venues.map((venue) => (
-                      <option key={venue.id} value={venue.name}>
-                        {venue.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.venue && (
-                    <p className="mt-1 text-sm text-red-600">{errors.venue}</p>
+                  {isLoadingVenues ? (
+                    <div className="mt-1 p-2 border border-gray-300 rounded-md bg-gray-100 animate-pulse">
+                      Loading venues...
+                    </div>
+                  ) : venueError ? (
+                    <div className="mt-1 p-2 border border-red-300 rounded-md bg-red-50 text-red-600">
+                      {venueError}
+                    </div>
+                  ) : (
+                    <>
+                      <select
+                        name="venue"
+                        value={formData.venue}
+                        onChange={handleChange}
+                        className={`mt-1 block w-full p-2 border ${
+                          errors.venue ? "border-red-500" : "border-gray-300"
+                        } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500`}
+                      >
+                        <option value="">Select Venue</option>
+                        {venues.map((venue) => (
+                          <option key={venue._id} value={venue._id}>
+                            {venue.name} ({venue.totalSeats || 0} seats)
+                          </option>
+                        ))}
+                      </select>
+                      {errors.venue && (
+                        <p className="mt-1 text-sm text-red-600">{errors.venue}</p>
+                      )}
+                    </>
                   )}
                 </div>
                 <div>
@@ -543,9 +612,9 @@ const AddEventForm = ({ onClose, onEventCreated }) => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || venueError}
               className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                isSubmitting || venueError ? "opacity-70 cursor-not-allowed" : ""
               }`}
             >
               {isSubmitting ? "Creating..." : "Create Event"}
