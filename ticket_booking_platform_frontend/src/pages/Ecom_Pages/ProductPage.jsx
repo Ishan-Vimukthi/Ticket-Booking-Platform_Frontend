@@ -184,10 +184,6 @@ const ProductPage = () => {
           <div className="space-y-6">
             <h1 className="text-3xl font-bold">{product.name}</h1>
             <p className="text-2xl">${product.price.toFixed(2)}</p>
-            <p className="text-gray-600">
-              or a payment of Rs {(product.price / 3).toLocaleString()} with <br />
-              <span className="font-semibold">return</span> or <span className="font-semibold">1000</span>
-            </p>
 
             <div className="border-t border-b border-gray-200 py-4">
               <div className="mb-4">

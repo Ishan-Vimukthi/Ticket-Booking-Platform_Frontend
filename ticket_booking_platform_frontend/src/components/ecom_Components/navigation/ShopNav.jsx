@@ -6,30 +6,38 @@ import { useCart } from '../../../contexts/CartContext';
 const ShopNav = ({ onSearch }) => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
-  const { cartCount, openCart, isCartOpen } = useCart();
+  const { cartCount, openCart } = useCart();
 
   const isProductPage = location.pathname.includes('/product/');
   const isCheckoutPage = location.pathname.includes('/checkout');
+  const isShopPage = location.pathname === '/shop';
 
   useEffect(() => {
-    if (!isProductPage && !isCheckoutPage) {
-      const handleScroll = () => {
-        const isScrolled = window.scrollY > 50;
-        if (isScrolled !== scrolled) {
-          setScrolled(isScrolled);
-        }
-      };
-
-      window.addEventListener("scroll", handleScroll, { passive: true });
-      return () => window.removeEventListener("scroll", handleScroll);
+    // Immediately set solid black for non-shop pages
+    if (!isShopPage) {
+      setScrolled(true);
+      return;
     }
-  }, [scrolled, isProductPage, isCheckoutPage]);
+
+    const handleScroll = () => {
+      const shouldBeScrolled = window.scrollY > 50;
+      setScrolled(shouldBeScrolled);
+    };
+
+    // Set initial state
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isShopPage]);
 
   return (
-    <nav className={`fixed w-full z-50 h-16 bg-black shadow-md transition-all duration-300`}>
+    <nav className={`fixed w-full z-50 h-16 transition-all duration-300 ${
+      scrolled ? 'bg-black shadow-md' : 'bg-transparent'
+    }`}>
       <div className="container mx-auto px-4 h-full">
         <div className="flex items-center justify-between h-full">
-          {/* Left Section - Back button on product/checkout page */}
+          {/* Left Section */}
           <div className="flex items-center space-x-4">
             {isProductPage || isCheckoutPage ? (
               <Link 
@@ -49,22 +57,31 @@ const ShopNav = ({ onSearch }) => {
                 </Link>
                 <Link 
                   to="/shop" 
-                  className="text-xl font-bold text-white hover:text-gray-300 transition-colors"
+                  className="text-m font-bold text-white hover:text-gray-300 transition-colors"
                 >
-                  BigIdea
+                  EVENTS
                 </Link>
               </>
             )}
           </div>
 
-          {/* Center Section - Simple "Product Details" text on product page */}
+          {/* Center Section - Only show on shop page */}
+          {isShopPage && (
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <span className="text-xl text-white font-bold uppercase tracking-wider">
+                BIG IDEA STORE
+              </span>
+            </div>
+          )}
+
+          {/* Show product title on product pages */}
           {isProductPage && (
             <div className="hidden md:flex text-white font-medium">
               Product Details
             </div>
           )}
 
-          {/* Right Section - Cart icon */}
+          {/* Right Section */}
           <div className="flex items-center">
             <button 
               onClick={openCart}
@@ -81,7 +98,7 @@ const ShopNav = ({ onSearch }) => {
         </div>
 
         {/* Mobile category links - only on shop page */}
-        {!isProductPage && !isCheckoutPage && (
+        {isShopPage && (
           <div className={`md:hidden flex justify-center space-x-4 py-2 ${
             scrolled ? 'bg-black' : 'bg-transparent'
           }`}>
