@@ -2,16 +2,21 @@ import React from 'react';
 import { MdDateRange, MdLocationOn } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, venues = [] }) => {
   const navigate = useNavigate();
 
-  // Get the lowest ticket price if ticketTypes exist
+  // Get the lowest ticket price
   const getLowestPrice = () => {
-    if (!event.ticketTypes || event.ticketTypes.length === 0) return 'Free';
-    
-    const prices = event.ticketTypes.map(ticket => ticket.price);
-    const minPrice = Math.min(...prices);
-    return `USD ${minPrice} `;
+    if (!event.ticketTypes?.length) return 'Free';
+    const minPrice = Math.min(...event.ticketTypes.map(t => t.price));
+    return `USD ${minPrice}`;
+  };
+
+  // Get venue name safely
+  const getVenueName = (venueId) => {
+    if (!venues?.length) return venueId; // Fallback if no venues
+    const venue = venues.find(v => v._id === venueId);
+    return venue?.name || venueId; // Return name or fallback to ID
   };
 
   return (
@@ -32,12 +37,10 @@ const EventCard = ({ event }) => {
       <div className="p-4">
         <h2 className="text-lg font-semibold text-gray-900 mb-1 truncate">{event.eventName}</h2>
         
-        {/* Event Description (truncated) */}
         <p className="text-gray-600 text-sm mb-2 line-clamp-2">
           {event.eventDescription}
         </p>
 
-        {/* Date Section */}
         <div className="flex items-center text-gray-600 text-sm mb-2">
           <MdDateRange className="text-gray-500 mr-2 text-lg" />
           <span className="font-medium">
@@ -45,18 +48,16 @@ const EventCard = ({ event }) => {
               year: 'numeric',
               month: 'short',
               day: 'numeric',
-            })}{' '}
+            })}
             • {event.eventTime}
           </span>
         </div>
 
-        {/* Location Section */}
         <div className="flex items-center text-gray-600 text-sm mb-2">
           <MdLocationOn className="text-gray-500 mr-2 text-lg" />
-          <span className="truncate">{event.venue}</span>
+          <span className="truncate">{getVenueName(event.venue)}</span>
         </div>
 
-        {/* Status Badge */}
         <div className="mb-2">
           <span className={`px-2 py-1 text-xs rounded-full ${
             event.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' :
@@ -67,12 +68,10 @@ const EventCard = ({ event }) => {
           </span>
         </div>
 
-        {/* Price */}
         <div className="text-blue-600 font-bold text-lg mb-4">
           {getLowestPrice()} <span className="text-gray-500 text-sm">upwards</span>
         </div>
 
-        {/* Buy Tickets Button */}
         <button 
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200"
           onClick={() => navigate(`/events/${event._id}`)}
