@@ -24,6 +24,7 @@ const AdminListWithCrud = () => {
     setError,
     clearErrors,
     getValues,
+    setValue,
   } = useForm();
 
   // API base URL
@@ -61,16 +62,17 @@ const AdminListWithCrud = () => {
     setSelectedAdmin(admin);
 
     if (type === "edit" && admin) {
-      reset({
-        name: admin.name,
-        email: admin.email,
-        mobile: admin.mobile,
-      });
+      // Set form values for editing
+      setValue("userName", admin.userName);
+      setValue("email", admin.email);
+      setValue("mobile", admin.mobile);
+      setValue("role", admin.role);
     } else if (type === "create") {
       reset({
-        name: "",
+        userName: "",
         email: "",
         mobile: "",
+        role: "",
         password: "",
       });
     } else if (type === "password" && admin) {
@@ -293,8 +295,8 @@ const AdminListWithCrud = () => {
                 {modalType === "create"
                   ? "Create New Admin"
                   : modalType === "edit"
-                  ? `Edit Admin: ${selectedAdmin?.name}`
-                  : `Change Password for ${selectedAdmin?.name}`}
+                  ? `Edit Admin: ${selectedAdmin?.userName}`
+                  : `Change Password for ${selectedAdmin?.userName}`}
               </h2>
 
               <form
@@ -359,21 +361,17 @@ const AdminListWithCrud = () => {
                     </div>
                     <div>
                       <label className="block text-gray-700 mb-1">Role *</label>
-                      <input
-                        type="text"
+                      <select
                         {...register("role", {
                           required: "Role is required",
-                          validate: {
-                            validRole: (value) =>
-                              ["superadmin", "admin", "moderator"].includes(
-                                value
-                              ) ||
-                              "Role must be one of: superadmin, admin, or moderator",
-                          },
                         })}
                         className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter role (superadmin, admin, or moderator)"
-                      />
+                      >
+                        <option value="">Select Role</option>
+                        <option value="superadmin">Super Admin</option>
+                        <option value="admin">Admin</option>
+                        <option value="moderator">Moderator</option>
+                      </select>
                       {errors.role && (
                         <p className="text-red-500 text-sm mt-1">
                           {errors.role.message}
@@ -526,7 +524,7 @@ const AdminListWithCrud = () => {
               <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
               <p className="mb-6">
                 Are you sure you want to delete admin{" "}
-                <strong>{adminToDelete?.name}</strong> ({adminToDelete?.email})?
+                <strong>{adminToDelete?.userName}</strong> ({adminToDelete?.email})?
                 This action cannot be undone.
               </p>
 
