@@ -8,30 +8,48 @@ import { Link } from "react-router-dom";
 const EventDetail = () => {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
+  const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchEvent = async () => {
+    const fetchData = async () => {
       try {
         const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-        const response = await fetch(`${API_BASE}/api/events/${id}`);
+        
+        // Fetch both event and venues in parallel
+        const [eventResponse, venuesResponse] = await Promise.all([
+          fetch(`${API_BASE}/api/events/${id}`),
+          fetch(`${API_BASE}/api/venues`)
+        ]);
 
-        if (!response.ok) {
-          throw new Error(`Server Error: ${response.status}`);
+        if (!eventResponse.ok || !venuesResponse.ok) {
+          throw new Error(`Server Error: ${eventResponse.status} or ${venuesResponse.status}`);
         }
 
-        const data = await response.json();
-        setEvent(data.data);
+        const eventData = await eventResponse.json();
+        const venuesData = await venuesResponse.json();
+
+        // Handle response structures (data.data if exists)
+        setEvent(eventData.data || eventData);
+        setVenues(venuesData.data || venuesData);
       } catch (err) {
         setError(err.message);
+        console.error("Fetch error:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEvent();
+    fetchData();
   }, [id]);
+
+  // Function to get venue name by ID
+  const getVenueName = (venueId) => {
+    if (!venues || !Array.isArray(venues)) return venueId; // Fallback to ID if venues not available
+    const venue = venues.find(v => v._id === venueId);
+    return venue ? venue.name : venueId; // Return name if found, otherwise fallback to ID
+  };
 
   if (loading) return <div className="text-center p-10 text-gray-500">Loading event details...</div>;
   if (error) return <div className="text-center p-10 text-red-500">Error: {error}</div>;
@@ -56,40 +74,39 @@ const EventDetail = () => {
 
       {/* Event Header */}
       <div className="relative bg-[#06122A] text-white px-6 md:px-12 py-12 md:py-20">
-  <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-end">
-    
-    {/* Left Side: Event Details */}
-    <div className="md:flex-1 w-full md:pb-10"> 
-      <h1 className="text-4xl font-bold mb-2">{event.eventName}</h1>
-      <div className="flex flex-wrap gap-6 text-gray-300 text-lg">
-        <div className="flex items-center">
-          <MdDateRange className="mr-2" size={20} />
-          <span>
-            {new Date(event.eventDate).toLocaleDateString('en-US', {
-              weekday: 'long',
-              month: 'short',
-              day: 'numeric',
-            })} 
-            • {event.eventTime} IST
-          </span>
-        </div>
-        <div className="flex items-center">
-          <MdLocationOn className="mr-2" size={20} />
-          <span>{event.venue}</span>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-end">
+          {/* Left Side: Event Details */}
+          <div className="md:flex-1 w-full md:pb-10"> 
+            <h1 className="text-4xl font-bold mb-2">{event.eventName}</h1>
+            <div className="flex flex-wrap gap-6 text-gray-300 text-lg">
+              <div className="flex items-center">
+                <MdDateRange className="mr-2" size={20} />
+                <span>
+                  {new Date(event.eventDate).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'short',
+                    day: 'numeric',
+                  })} 
+                  • {event.eventTime} IST
+                </span>
+              </div>
+              <div className="flex items-center">
+                <MdLocationOn className="mr-2" size={20} />
+                <span>{getVenueName(event.venue)}</span> {/* Updated to use venue name */}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side: Event Image */}
+          <div className="md:w-1/3 mt-6 md:mt-0">
+            <img 
+              src={event.image || "https://via.placeholder.com/400x320"} 
+              alt={event.eventName} 
+              className="w-full rounded-lg shadow-lg" 
+            />
+          </div>
         </div>
       </div>
-    </div>
-
-    {/* Right Side: Event Image */}
-    <div className="md:w-1/3 mt-6 md:mt-0">
-      <img src={event.image || "https://via.placeholder.com/400x320"} 
-           alt={event.eventName} 
-           className="w-full rounded-lg shadow-lg" />
-    </div>
-
-  </div>
-</div>
-
 
       {/* Event Details & Ticket Section */}
       <div className="bg-white text-black py-10">
