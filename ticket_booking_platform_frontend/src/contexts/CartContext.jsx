@@ -15,12 +15,12 @@ export const CartProvider = ({ children }) => {
   const addToCart = (product) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(
-        item => item.id === product.id && item.size === product.selectedSize
+        item => item.id === product.id && item.size === (product.size || product.selectedSize)
       );
       
       if (existingItem) {
         return prevItems.map(item =>
-          item.id === product.id && item.size === product.selectedSize
+          item.id === product.id && item.size === (product.size || product.selectedSize)
             ? { ...item, quantity: item.quantity + (product.quantity || 1) }
             : item
         );
@@ -28,27 +28,36 @@ export const CartProvider = ({ children }) => {
       
       return [...prevItems, { 
         ...product,
-        size: product.selectedSize,
-        quantity: product.quantity || 1
+        size: product.size || product.selectedSize,
+        quantity: product.quantity || 1,
+        image: product.image
       }];
     });
   };
 
-  const removeFromCart = (id) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+  const removeFromCart = (id, size) => {
+    setCartItems(prevItems => 
+      prevItems.filter(item => !(item.id === id && item.size === size))
+    );
   };
 
-  const updateQuantity = (id, newQuantity) => {
+  const updateQuantity = (id, size, newQuantity) => {
     if (newQuantity < 1) {
-      removeFromCart(id);
+      removeFromCart(id, size);
       return;
     }
 
     setCartItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
+        item.id === id && item.size === size
+          ? { ...item, quantity: newQuantity }
+          : item
       )
     );
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
   };
 
   return (
@@ -61,6 +70,7 @@ export const CartProvider = ({ children }) => {
         addToCart,
         removeFromCart,
         updateQuantity,
+        clearCart,
         cartCount,
         cartTotal,
         setCartItems

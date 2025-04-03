@@ -16,6 +16,7 @@ import "react-toastify/dist/ReactToastify.css";
 import CartSlider from "./components/ecom_Components/cart/CartSlider";
 import { CartProvider } from "./contexts/CartContext";
 import CheckoutPage from "./pages/Ecom_Pages/CheckoutPage";
+import EventDetail from "./components/EventDetail";
 
 const App = () => {
   return (
@@ -25,6 +26,7 @@ const App = () => {
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/events" element={<Event />} />
+          <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/aboutus" element={<AboutUs />} />
           <Route path="/contactus" element={<ContactUs />} />
           <Route path="/shop" element={<Shop />} />

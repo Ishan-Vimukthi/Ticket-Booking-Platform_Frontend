@@ -4,6 +4,7 @@ import { useCart } from '../../../contexts/CartContext';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getProductImage } from '../../../utils/images';
 
 const CartSlider = () => {
   const { 
@@ -63,18 +64,19 @@ const CartSlider = () => {
                 {cartItems.map((item) => (
                   <li key={`${item.id}-${item.size}`} className="pb-6 border-b border-gray-100">
                     <div className="flex">
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
-                        className="h-24 w-20 object-cover rounded"
-                      />
+                      <div className="h-24 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                        <img
+                          src={getProductImage(item.image)}
+                          alt={item.name}
+                          className="h-full w-full object-cover object-center"
+                        />
+                      </div>
                       <div className="ml-4 flex-1">
                         <div className="flex justify-between">
                           <h3 className="text-lg font-medium">{item.name}</h3>
                           <p className="ml-4 font-bold">LKR {item.price.toLocaleString()}</p>
                         </div>
                         
-                        {/* Display Size */}
                         <div className="mt-1">
                           <p className="text-sm text-gray-500">
                             Size: <span className="font-medium">{item.size || 'Not specified'}</span>
@@ -84,7 +86,7 @@ const CartSlider = () => {
                         <div className="mt-3 flex items-center justify-between">
                           <div className="flex items-center border rounded-md">
                             <button 
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.id, item.size, item.quantity - 1)}
                               className="px-3 py-1 hover:bg-gray-100 transition-colors"
                             >
                               -
@@ -93,14 +95,14 @@ const CartSlider = () => {
                               {item.quantity}
                             </span>
                             <button 
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.id, item.size, item.quantity + 1)}
                               className="px-3 py-1 hover:bg-gray-100 transition-colors"
                             >
                               +
                             </button>
                           </div>
                           <button 
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeFromCart(item.id, item.size)}
                             className="text-sm underline text-gray-500 hover:text-black"
                           >
                             Remove
@@ -129,7 +131,8 @@ const CartSlider = () => {
               {cartItems.length > 0 ? (
                 <Link 
                   to="/checkout" 
-                  className="bg-black text-center text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium w-full max-w-xs" 
+                  className="bg-black text-center text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium w-full max-w-xs"
+                  onClick={closeCart} // Add this line
                 >
                   CHECKOUT • LKR {cartTotal.toLocaleString()}
                 </Link>
@@ -144,9 +147,13 @@ const CartSlider = () => {
               )}
             </div>
             
-            <button className="w-full mt-2 text-center underline text-sm text-gray-500 hover:text-black">
+            <Link 
+              to="/cart" 
+              className="block w-full mt-2 text-center underline text-sm text-gray-500 hover:text-black"
+              onClick={closeCart}
+            >
               View cart
-            </button>
+            </Link>
           </div>
         </div>
       </div>

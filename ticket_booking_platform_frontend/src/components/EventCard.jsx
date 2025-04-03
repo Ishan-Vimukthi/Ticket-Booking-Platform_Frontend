@@ -1,20 +1,23 @@
 import React from 'react';
 import { MdDateRange, MdLocationOn } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
 
 const EventCard = ({ event }) => {
+  const navigate = useNavigate();
+
   // Get the lowest ticket price if ticketTypes exist
   const getLowestPrice = () => {
     if (!event.ticketTypes || event.ticketTypes.length === 0) return 'Free';
     
     const prices = event.ticketTypes.map(ticket => ticket.price);
     const minPrice = Math.min(...prices);
-    return `${minPrice} USD`;
+    return `USD ${minPrice} `;
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-300 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
       {/* Image Section */}
-      <div className="relative h-56 bg-gray-100 overflow-hidden border-b">
+      <div className="relative h-56 bg-gray-100 overflow-hidden">
         <img
           src={event.image || 'https://via.placeholder.com/400x200?text=No+Image'}
           alt={event.eventName}
@@ -70,7 +73,10 @@ const EventCard = ({ event }) => {
         </div>
 
         {/* Buy Tickets Button */}
-        <button className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition">
+        <button 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200"
+          onClick={() => navigate(`/events/${event._id}`)}
+        >
           Buy Tickets
         </button>
       </div>

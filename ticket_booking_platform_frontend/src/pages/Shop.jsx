@@ -3,13 +3,15 @@ import ProductCard from "../components/ecom_Components/cards/ProductCard";
 import ShopNav from "../components/ecom_Components/navigation/ShopNav";
 import Footer from "../components/Footer";
 import CartSlider from "../components/ecom_Components/cart/CartSlider";
+import { getProductImage } from "../utils/images";
+import { heroBg, defaultImage } from "../utils/images";
 
 const products = [
   {
     id: 1,
     name: "Men's Premium Jacket",
     price: 89.99,
-    image: "/images/tshirt1.jpg",
+    image: "tshirt1.jpg",
     category: "men",
     rating: 4.5,
     colors: ["black", "navy", "olive"],
@@ -19,7 +21,7 @@ const products = [
     id: 2,
     name: "Women's Summer Dress",
     price: 49.99,
-    image: "https://via.placeholder.com/300",
+    image: "tshirt2.jpg",
     category: "women",
     rating: 4.2,
     colors: ["red", "white", "blue"],
@@ -29,7 +31,7 @@ const products = [
     id: 3,
     name: "Unisex Sneakers",
     price: 65.99,
-    image: "https://via.placeholder.com/300",
+    image: "tshirt3.png",
     category: "footwear",
     rating: 4.7,
     colors: ["white", "black"],
@@ -39,7 +41,7 @@ const products = [
     id: 4,
     name: "Wireless Headphones",
     price: 129.99,
-    image: "https://via.placeholder.com/300",
+    image: "tshirt4.png",
     category: "electronics",
     rating: 4.8,
     colors: ["black", "silver"],
@@ -49,7 +51,7 @@ const products = [
     id: 5,
     name: "oversized tee",
     price: 100.99,
-    image: "https://via.placeholder.com/300",
+    image: "tshirt5.jpg",
     category: "electronics",
     rating: 4.8,
     colors: ["black", "silver"],
@@ -59,76 +61,39 @@ const products = [
     id: 6,
     name: "oversized tee",
     price: 100.99,
-    image: "https://via.placeholder.com/300",
+    image: "tshirt6.jpg",
     category: "electronics",
     rating: 4.8,
     colors: ["black", "silver"],
     sizes: ["S", "M", "L", "XL"]
-  },
-  {
-    id: 7,
-    name: "oversized tee",
-    price: 100.99,
-    image: "https://via.placeholder.com/300",
-    category: "electronics",
-    rating: 4.8,
-    colors: ["black", "silver"],
-    sizes: ["S", "M", "L", "XL"]
-  },
-  {
-    id: 8,
-    name: "oversized tee",
-    price: 100.99,
-    image: "https://via.placeholder.com/300",
-    category: "electronics",
-    rating: 4.8,
-    colors: ["black", "silver"],
-    sizes: ["S", "M", "L", "XL"]
-  },
-  {
-    id: 9,
-    name: "oversized tee",
-    price: 100.99,
-    image: "https://via.placeholder.com/300",
-    category: "electronics",
-    rating: 4.8,
-    colors: ["black", "silver"],
-    sizes: ["S", "M", "L", "XL"]
-  },
-  {
-    id: 10,
-    name: "oversized tee",
-    price: 100.99,
-    image: "https://via.placeholder.com/300",
-    category: "electronics",
-    rating: 4.8,
-    colors: ["black", "silver"],
-    sizes: ["S", "M", "L", "XL"]
-  },
+  }
 ];
 
 const Shop = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter((product) => {
+    if (!product || !product.name) return false;
+    const query = typeof searchQuery === 'string' ? searchQuery.toLowerCase() : '';
+    const productName = product.name.toLowerCase();
+    return productName.includes(query);
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
       <ShopNav onSearch={setSearchQuery} />
-      
-      {/* Cart Slider */}
       <CartSlider />
 
-      {/* Hero Section */}
       <div className="relative h-[80vh] bg-gray-900 overflow-hidden pt-16">
         <div className="absolute inset-0">
           <img
             className="w-full h-full object-cover opacity-70"
-            src="/images/hero-bg.jpg"
+            src={heroBg}
             alt="BigIdea hero"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = defaultImage;
+            }}
           />
           <div className="absolute inset-0 bg-gray-900 mix-blend-multiply"></div>
         </div>
@@ -145,9 +110,7 @@ const Shop = () => {
         </div>
       </div>
 
-      {/* Products Section */}
       <main className="container mx-auto px-4 py-12">
-        {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Our Products</h1>
           <p className="text-gray-600 mt-2">
@@ -155,7 +118,6 @@ const Shop = () => {
           </p>
         </div>
 
-        {/* Product Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
             <ProductCard
@@ -166,7 +128,6 @@ const Shop = () => {
           ))}
         </div>
 
-        {/* Empty State */}
         {filteredProducts.length === 0 && (
           <div className="text-center py-12">
             <h3 className="text-xl font-medium text-gray-500">
