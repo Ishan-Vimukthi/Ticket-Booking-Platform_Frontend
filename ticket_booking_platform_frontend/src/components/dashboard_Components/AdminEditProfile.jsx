@@ -190,73 +190,75 @@ const AdminListWithCrud = () => {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold">Admin Management</h1>
         <button
           onClick={() => openModal('create')}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full sm:w-auto"
         >
           Add New Admin
         </button>
       </div>
       
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="py-3 px-4 text-left">Name</th>
-              <th className="py-3 px-4 text-left">Email</th>
-              <th className="py-3 px-4 text-left">Mobile</th>
-              <th className="py-3 px-4 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {admins.length > 0 ? (
-              admins.map((admin) => (
-                <tr key={admin._id} className="border-t hover:bg-gray-50">
-                  <td className="py-3 px-4">{admin.name}</td>
-                  <td className="py-3 px-4">{admin.email}</td>
-                  <td className="py-3 px-4">{admin.mobile}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => openModal('edit', admin)}
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => openModal('password', admin)}
-                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-                      >
-                        Password
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(admin)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="py-3 px-4 text-left">Name</th>
+                <th className="py-3 px-4 text-left">Email</th>
+                <th className="py-3 px-4 text-left">Mobile</th>
+                <th className="py-3 px-4 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {admins.length > 0 ? (
+                admins.map((admin) => (
+                  <tr key={admin._id} className="border-t hover:bg-gray-50">
+                    <td className="py-3 px-4">{admin.name}</td>
+                    <td className="py-3 px-4 break-all">{admin.email}</td>
+                    <td className="py-3 px-4">{admin.mobile}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => openModal('edit', admin)}
+                          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => openModal('password', admin)}
+                          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                        >
+                          Password
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(admin)}
+                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr key="no-admins">
+                  <td colSpan="4" className="py-4 text-center text-gray-500">
+                    No admins found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr key="no-admins">
-                <td colSpan="4" className="py-4 text-center text-gray-500">
-                  No admins found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Combined Modal for all operations */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-2">
+            <div className="p-4 sm:p-6">
               <h2 className="text-xl font-bold mb-4">
                 {modalType === 'create' ? 'Create New Admin' : 
                  modalType === 'edit' ? `Edit Admin: ${selectedAdmin?.name}` : 
@@ -399,7 +401,7 @@ const AdminListWithCrud = () => {
                   </>
                 )}
                 
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                   <button
                     type="button"
                     onClick={closeModal}
@@ -424,13 +426,13 @@ const AdminListWithCrud = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-2">
+            <div className="p-4 sm:p-6">
               <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
               <p className="mb-6">Are you sure you want to delete admin <strong>{adminToDelete?.name}</strong> ({adminToDelete?.email})? This action cannot be undone.</p>
               
-              <div className="flex justify-end space-x-3">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                 <button
                   onClick={closeDeleteModal}
                   className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"

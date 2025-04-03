@@ -106,6 +106,7 @@ const EventList = () => {
       await deleteEvent(eventToDelete);
       setEvents(prevEvents => prevEvents.filter(event => event._id !== eventToDelete));
       setDeleteModalOpen(false);
+      window.location.reload();
     } catch (err) {
       console.error('Delete error:', err);
       alert(err.message || 'Failed to delete event. Please try again.');
@@ -128,6 +129,7 @@ const EventList = () => {
       );
     });
     setEditModalOpen(false);
+    window.location.reload();
   };
 
   if (loading) {
