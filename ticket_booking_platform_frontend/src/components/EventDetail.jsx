@@ -122,7 +122,7 @@ const EventDetail = () => {
                   event.ticketTypes.map((ticket, index) => (
                     <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
                       <span className="text-gray-700">{ticket.type}</span>
-                      <span className="font-semibold text-blue-600">{ticket.price} LKR</span>
+                      <span className="font-semibold text-blue-600">USD {ticket.price}</span>
                     </div>
                   ))
                 ) : (
