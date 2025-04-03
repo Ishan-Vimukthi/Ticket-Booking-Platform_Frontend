@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
-import SizeSelector from "../../components/ecom_Components/porduct_components/SizeSelector";
 import ShopNav from "../../components/ecom_Components/navigation/ShopNav";
 import CartSlider from "../../components/ecom_Components/cart/CartSlider";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Footer from "../../components/Footer";
+import { getProductImage } from '../../utils/images';
 
 const ProductPage = () => {
   const { id } = useParams();
-  const { addToCart, cartItems, setCartItems } = useCart(); // Added setCartItems from useCart
+  const { addToCart, cartItems, setCartItems } = useCart();
   const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -24,7 +24,7 @@ const ProductPage = () => {
       sizes: ["S", "M", "L", "XL"],
       description: "STEP UP YOUR COMFORT GAME...",
       inStock: true,
-      image: "/images/tshirt1.jpg",
+      image: "tshirt1.jpg",
     };
     setProduct(mockProduct);
   }, [id]);
@@ -38,7 +38,7 @@ const ProductPage = () => {
       });
       return;
     }
-    addToCart({ ...product, selectedSize, quantity });
+    addToCart({ ...product, size: selectedSize, quantity });
     toast.success('Added to cart!', {
       position: "top-right",
       autoClose: 2000,
@@ -56,13 +56,11 @@ const ProductPage = () => {
       return;
     }
     
-    // Check if product with same ID and size already exists in cart
     const existingItemIndex = cartItems.findIndex(
       item => item.id === product.id && item.size === selectedSize
     );
     
     if (existingItemIndex >= 0) {
-      // If item exists, update its quantity to the current selected quantity
       const updatedItems = [...cartItems];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
@@ -70,8 +68,7 @@ const ProductPage = () => {
       };
       setCartItems(updatedItems);
     } else {
-      // If item doesn't exist, add it with the selected quantity
-      addToCart({ ...product, selectedSize, quantity });
+      addToCart({ ...product, size: selectedSize, quantity });
     }
     
     navigate('/checkout');
@@ -86,16 +83,14 @@ const ProductPage = () => {
       <ToastContainer />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left Column: Image */}
           <div className="bg-gray-100 rounded-lg overflow-hidden">
             <img
-              src={product.image}
+              src={getProductImage(product.image)}
               alt={product.name}
               className="w-full h-full object-cover"
             />
           </div>
 
-          {/* Right Column: Details */}
           <div className="space-y-6">
             <h1 className="text-3xl font-bold">{product.name}</h1>
             <p className="text-2xl">Rs {product.price.toLocaleString()}</p>
@@ -105,7 +100,6 @@ const ProductPage = () => {
             </p>
 
             <div className="border-t border-b border-gray-200 py-4">
-              {/* Size Selector */}
               <div className="mb-4">
                 <label className="block text-gray-700 mb-2">Size</label>
                 <div className="flex flex-wrap gap-2">
@@ -125,7 +119,6 @@ const ProductPage = () => {
                 </div>
               </div>
 
-              {/* Quantity */}
               <div className="flex items-center space-x-4 mt-4">
                 <span className="font-medium">Quantity:</span>
                 <div className="flex border border-gray-300 rounded">
@@ -145,7 +138,6 @@ const ProductPage = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="space-y-3 mt-6">
                 <button
                   onClick={handleAddToCart}

@@ -9,9 +9,10 @@ const ShopNav = ({ onSearch }) => {
   const { cartCount, openCart, isCartOpen } = useCart();
 
   const isProductPage = location.pathname.includes('/product/');
+  const isCheckoutPage = location.pathname.includes('/checkout');
 
   useEffect(() => {
-    if (!isProductPage) {
+    if (!isProductPage && !isCheckoutPage) {
       const handleScroll = () => {
         const isScrolled = window.scrollY > 50;
         if (isScrolled !== scrolled) {
@@ -22,15 +23,15 @@ const ShopNav = ({ onSearch }) => {
       window.addEventListener("scroll", handleScroll, { passive: true });
       return () => window.removeEventListener("scroll", handleScroll);
     }
-  }, [scrolled, isProductPage]);
+  }, [scrolled, isProductPage, isCheckoutPage]);
 
   return (
     <nav className={`fixed w-full z-50 h-16 bg-black shadow-md transition-all duration-300`}>
       <div className="container mx-auto px-4 h-full">
         <div className="flex items-center justify-between h-full">
-          {/* Left Section - Back button on product page */}
+          {/* Left Section - Back button on product/checkout page */}
           <div className="flex items-center space-x-4">
-            {isProductPage ? (
+            {isProductPage || isCheckoutPage ? (
               <Link 
                 to="/shop" 
                 className="text-white hover:text-gray-300 transition-colors flex items-center"
@@ -59,7 +60,7 @@ const ShopNav = ({ onSearch }) => {
           {/* Center Section - Product name on product page */}
           {isProductPage && (
             <div className="hidden md:flex text-white font-medium truncate max-w-xs">
-              Acid Wash Jagger {/* Dynamic product name would go here */}
+              Acid Wash Jagger
             </div>
           )}
 
@@ -80,7 +81,7 @@ const ShopNav = ({ onSearch }) => {
         </div>
 
         {/* Mobile category links - only on shop page */}
-        {!isProductPage && (
+        {!isProductPage && !isCheckoutPage && (
           <div className={`md:hidden flex justify-center space-x-4 py-2 ${
             scrolled ? 'bg-black' : 'bg-transparent'
           }`}>
