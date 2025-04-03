@@ -107,8 +107,10 @@ const EventDetail = () => {
             <div className="mt-8">
               <h3 className="font-bold text-gray-900 mb-3">Ticket Policy</h3>
               <ul className="text-sm text-gray-600 space-y-2">
-                <li>• Only the initial email or SMS provided by MyTicketsLK will be accepted as proof of purchase. Tickets will not be redeemed for any forwarded or screenshots.</li>
+                <li>• Only the initial email provided by BigIdea will be accepted as proof of purchase. Tickets will not be redeemed for any forwarded or screenshots.</li>
                 <li>• Valid NIC or Passport will be required if needed during the process of redeeming.</li>
+                <li>• Tickets are non-refundable and non-transferable.</li>
+                <li>• The event is subject to cancellation or rescheduling due to unforeseen circumstances.</li>
               </ul>
             </div>
           </div>
