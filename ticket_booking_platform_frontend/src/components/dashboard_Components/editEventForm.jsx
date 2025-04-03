@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const EditEventForm = ({ event, onClose, onUpdate }) => {
+const EditEventForm = ({ event, onClose, onUpdate, venues }) => {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
   
   const [formData, setFormData] = useState({
@@ -10,6 +10,7 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
     eventDate: "",
     eventTime: "",
     venue: "",
+    venueName: "",
     totalTickets: "",
     ticketTypes: [
       { type: "General", price: 0 },
@@ -32,12 +33,15 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
   useEffect(() => {
     if (event) {
       const formattedDate = event.eventDate ? new Date(event.eventDate).toISOString().split('T')[0] : "";
+      const venue = venues.find(v => v._id === event.venue);
+      
       setFormData({
         eventName: event.eventName || "",
         eventDescription: event.eventDescription || "",
         eventDate: formattedDate,
         eventTime: event.eventTime || "",
         venue: event.venue || "",
+        venueName: venue ? venue.name : "",
         totalTickets: event.totalTickets?.toString() || "",
         ticketTypes: event.ticketTypes || [
           { type: "General", price: 0 },
@@ -49,7 +53,7 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
         status: event.status || "Upcoming"
       });
     }
-  }, [event]);
+  }, [event, venues]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -74,7 +78,18 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (name === "venue") {
+      const selectedVenue = venues.find(v => v._id === value);
+      setFormData(prev => ({ 
+        ...prev, 
+        venue: value,
+        venueName: selectedVenue ? selectedVenue.name : ""
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -345,8 +360,7 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Venue *
                     </label>
-                    <input
-                      type="text"
+                    <select
                       name="venue"
                       value={formData.venue}
                       onChange={handleChange}
@@ -354,8 +368,18 @@ const EditEventForm = ({ event, onClose, onUpdate }) => {
                         errors.venue ? 'border-red-500' : 'border-gray-300'
                       }`}
                       required
-                    />
+                    >
+                      <option value="">Select a venue</option>
+                      {venues.map(venue => (
+                        <option key={venue._id} value={venue._id}>
+                          {venue.name}
+                        </option>
+                      ))}
+                    </select>
                     {errors.venue && <p className="mt-1 text-sm text-red-600">{errors.venue}</p>}
+                    {formData.venueName && (
+                      <p className="mt-1 text-sm text-gray-500">Selected: {formData.venueName}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
