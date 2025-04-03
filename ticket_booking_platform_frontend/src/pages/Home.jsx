@@ -74,23 +74,7 @@ const Home = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
-      <main className="flex-grow">
-        <EventSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-        <MiddleText />
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredEvents.length > 0 ? (
-              filteredEvents.map((event) => (
-                <EventCard key={event._id} event={event} />
-              ))
-            ) : (
-              <p className="text-center text-gray-600 col-span-full">
-                {searchQuery ? "No matching events found." : "No upcoming events this month."}
-              </p>
-            )}
-          </div>
-        </div>
-      </main>
+      
       <Footer />
     </div>
   );
