@@ -4,7 +4,7 @@ import MiddleTextEvents from "../components/MiddleTextEvents";
 import Footer from "../components/Footer";
 import EventCard from "../components/EventCard";
 
-const Events = () => {
+const Event = () => {
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,11 +14,8 @@ const Events = () => {
     const fetchEvents = async () => {
       try {
         const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-        const response = await fetch(`${API_BASE}/api/events`, {
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
-
+        const response = await fetch(`${API_BASE}/api/events`);
+        
         if (!response.ok) {
           throw new Error(`Server Error: ${response.status}`);
         }
@@ -28,15 +25,18 @@ const Events = () => {
 
         // Get today's date at midnight to avoid timezone issues
         const currentDate = new Date();
-        currentDate.setHours(0, 0, 0, 0); // Reset time to midnight
+        currentDate.setHours(0, 0, 0, 0);
 
-        const upcomingEvents = data.filter((event) => {
+        // Handle the new response structure with data.data
+        const eventsData = data.data || [];
+        
+        const upcomingEvents = eventsData.filter((event) => {
           const eventDate = new Date(event.eventDate);
-          eventDate.setHours(0, 0, 0, 0); // Normalize event time
-          return eventDate >= currentDate; // Only show today onwards
+          eventDate.setHours(0, 0, 0, 0);
+          return eventDate >= currentDate;
         });
 
-        console.log("Upcoming Events:", upcomingEvents); // Debugging
+        console.log("Upcoming Events:", upcomingEvents);
         setEvents(upcomingEvents);
         setFilteredEvents(upcomingEvents);
       } catch (err) {
@@ -72,4 +72,4 @@ const Events = () => {
   );
 };
 
-export default Events;
+export default Event;
