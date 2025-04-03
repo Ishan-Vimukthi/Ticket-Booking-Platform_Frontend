@@ -8,7 +8,7 @@ const EventCard = ({ event }) => {
     
     const prices = event.ticketTypes.map(ticket => ticket.price);
     const minPrice = Math.min(...prices);
-    return `${minPrice} LKR`;
+    return `${minPrice} USD`;
   };
 
   return (
