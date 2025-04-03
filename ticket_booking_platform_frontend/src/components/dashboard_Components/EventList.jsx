@@ -3,6 +3,7 @@ import EditEventForm from '../dashboard_Components/editEventForm';
 
 const EventList = () => {
   const [events, setEvents] = useState([]);
+  const [venues, setVenues] = useState([]); // New state for venues
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -12,6 +13,38 @@ const EventList = () => {
   const [retryCount, setRetryCount] = useState(0);
 
   const fallbackImage = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgNDAwIDIwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSI+RXZlbnQgSW1hZ2U8L3RleHQ+PC9zdmc+';
+
+  // New function to fetch venues
+  const fetchVenues = async () => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_BASE}/api/venues`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Server returned ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data.data && Array.isArray(data.data)) {
+        return data.data;
+      } else if (data.venues && Array.isArray(data.venues)) {
+        return data.venues;
+      }
+      throw new Error('Unexpected API response format');
+    } catch (error) {
+      console.error('Fetch venues error:', error);
+      throw new Error(error.message || 'Failed to fetch venues.');
+    }
+  };
 
   const fetchEvents = async () => {
     try {
@@ -71,11 +104,16 @@ const EventList = () => {
     const controller = new AbortController();
     let mounted = true;
 
-    const loadEvents = async () => {
+    const loadData = async () => {
       try {
-        const data = await fetchEvents();
+        const [eventsData, venuesData] = await Promise.all([
+          fetchEvents(),
+          fetchVenues()
+        ]);
+        
         if (mounted) {
-          setEvents(data || []);
+          setEvents(eventsData || []);
+          setVenues(venuesData || []);
           setError(null);
         }
       } catch (err) {
@@ -93,13 +131,19 @@ const EventList = () => {
     };
 
     setLoading(true);
-    loadEvents();
+    loadData();
 
     return () => {
       mounted = false;
       controller.abort();
     };
   }, [retryCount]);
+
+  // Helper function to get venue name by ID
+  const getVenueName = (venueId) => {
+    const venue = venues.find(v => v._id === venueId);
+    return venue ? venue.name : 'Location not specified';
+  };
 
   const handleDelete = async () => {
     try {
@@ -118,7 +162,10 @@ const EventList = () => {
   };
 
   const handleEditClick = (event) => {
-    setEventToEdit(event);
+    setEventToEdit({
+      ...event,
+      venueName: getVenueName(event.venue) // Add venueName to the event object
+    });
     setEditModalOpen(true);
   };
 
@@ -243,7 +290,7 @@ const EventList = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="truncate">{event.venue || 'Location not specified'}</span>
+                  <span className="truncate">{getVenueName(event.venue)}</span>
                 </div>
 
                 <div className="flex justify-between items-center border-t pt-4">
@@ -319,6 +366,7 @@ const EventList = () => {
               </div>
               <EditEventForm 
                 event={eventToEdit} 
+                venues={venues} // Pass venues to the edit form
                 onClose={() => setEditModalOpen(false)}
                 onUpdate={handleEventUpdate}
               />
