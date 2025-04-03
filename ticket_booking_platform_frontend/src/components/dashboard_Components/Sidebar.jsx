@@ -9,9 +9,9 @@ const Sidebar = () => {
   const menuItems = [
     { name: "Analytics", path: "/admin", icon: <BarChart size={20} /> },
     { name: "Manage Events", path: "/manage-event", icon: <Calendar size={20} /> },
-    { name: "Manage Reports", path: "/reporting", icon: <FileText size={20} /> },
     { name: "Seat Mapping Tool", path: "/seat-map", icon: <Map size={20} /> },
     { name: "Edit Profile", path: "/edit-profile", icon: <Edit size={20} /> },
+    { name: "Manage Reports", path: "/reporting", icon: <FileText size={20} /> },
   ];
 
   return (
