@@ -8,6 +8,97 @@ import 'react-toastify/dist/ReactToastify.css';
 import Footer from "../../components/Footer";
 import { getProductImage } from '../../utils/images';
 
+// Import or define your products array (should match the one in Shop.js)
+const products = [
+  {
+    id: 1,
+    name: "Electronica Tee",
+    price: 18.99,
+    image: "tshirt1.jpg",
+    category: "men",
+    rating: 4.5,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Premium quality t-shirt with unique electronic design"
+  },
+  {
+    id: 2,
+    name: "Classic Tee - White",
+    price: 14.99,
+    image: "tshirt2.jpg",
+    category: "women",
+    rating: 4.2,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Classic white t-shirt for everyday wear"
+  },
+  {
+    id: 3,
+    name: "Moss Green - Earth",
+    price: 16.50,
+    image: "tshirt3.png",
+    category: "unisex",
+    rating: 4.7,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Eco-friendly t-shirt in soothing moss green"
+  },
+  {
+    id: 4,
+    name: "Transmission Tee",
+    price: 19.99,
+    image: "tshirt4.png",
+    category: "unisex",
+    rating: 4.8,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Graphic t-shirt with transmission-inspired design"
+  },
+  {
+    id: 5,
+    name: "Coast Tee",
+    price: 15.75,
+    image: "tshirt5.jpg",
+    category: "unisex",
+    rating: 4.3,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Relaxed fit t-shirt perfect for coastal vibes"
+  },
+  {
+    id: 6,
+    name: "Culture Tree",
+    price: 17.25,
+    image: "tshirt6.jpg",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Cultural inspired design on comfortable fabric"
+  },
+  {
+    id: 7,
+    name: "Down Beat tee",
+    price: 17.00,
+    image: "tshirt7.jpg",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 8,
+    name: "living in stereo",
+    price: 20.00,
+    image: "tshirt8.png",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 9,
+    name: "Studio tee",
+    price: 15.00,
+    image: "tshirt9.png",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  }
+];
+
 const ProductPage = () => {
   const { id } = useParams();
   const { addToCart, cartItems, setCartItems } = useCart();
@@ -17,17 +108,16 @@ const ProductPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const mockProduct = {
-      id: 1,
-      name: "Acid Wash Jagger",
-      price: 5100,
-      sizes: ["S", "M", "L", "XL"],
-      description: "STEP UP YOUR COMFORT GAME...",
-      inStock: true,
-      image: "tshirt1.jpg",
-    };
-    setProduct(mockProduct);
-  }, [id]);
+    // Find the product with matching ID
+    const foundProduct = products.find(p => p.id === parseInt(id));
+    
+    if (foundProduct) {
+      setProduct(foundProduct);
+    } else {
+      // Handle case where product isn't found
+      navigate('/shop'); // Redirect to shop page or show error
+    }
+  }, [id, navigate]);
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -93,7 +183,7 @@ const ProductPage = () => {
 
           <div className="space-y-6">
             <h1 className="text-3xl font-bold">{product.name}</h1>
-            <p className="text-2xl">Rs {product.price.toLocaleString()}</p>
+            <p className="text-2xl">${product.price.toFixed(2)}</p>
             <p className="text-gray-600">
               or a payment of Rs {(product.price / 3).toLocaleString()} with <br />
               <span className="font-semibold">return</span> or <span className="font-semibold">1000</span>
@@ -162,8 +252,7 @@ const ProductPage = () => {
             <div className="text-sm text-gray-600 space-y-2">
               <p>Standard shipping (Estimated 3-5 days)</p>
               <p>Payment is 100% secure</p>
-              <p>30 days to change your mind!</p>
-              <p>Made in Sri Lanka</p>
+              <p>14 days to change your mind!</p>
             </div>
           </div>
         </div>

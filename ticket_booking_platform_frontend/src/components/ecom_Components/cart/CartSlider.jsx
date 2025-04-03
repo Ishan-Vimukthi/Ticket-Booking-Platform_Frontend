@@ -74,7 +74,7 @@ const CartSlider = () => {
                       <div className="ml-4 flex-1">
                         <div className="flex justify-between">
                           <h3 className="text-lg font-medium">{item.name}</h3>
-                          <p className="ml-4 font-bold">LKR {item.price.toLocaleString()}</p>
+                          <p className="ml-4 font-bold">${item.price.toFixed(2)}</p>
                         </div>
                         
                         <div className="mt-1">
@@ -120,7 +120,7 @@ const CartSlider = () => {
           <div className="border-t p-4 bg-gray-50">
             <div className="flex justify-between items-center py-4 border-b border-gray-200 mb-4">
               <span className="font-bold">Total</span>
-              <span className="font-bold text-lg">LKR {cartTotal.toLocaleString()}</span>
+              <span className="font-bold text-lg">${cartTotal.toFixed(2)}</span>
             </div>
             
             <p className="text-xs text-gray-500 text-center mb-4">
@@ -132,9 +132,9 @@ const CartSlider = () => {
                 <Link 
                   to="/checkout" 
                   className="bg-black text-center text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium w-full max-w-xs"
-                  onClick={closeCart} // Add this line
+                  onClick={closeCart}
                 >
-                  CHECKOUT • LKR {cartTotal.toLocaleString()}
+                  CHECKOUT • ${cartTotal.toFixed(2)}
                 </Link>
               ) : (
                 <button
@@ -142,7 +142,7 @@ const CartSlider = () => {
                   className="bg-gray-400 text-center text-white px-6 py-3 rounded-md font-medium w-full max-w-xs cursor-not-allowed"
                   disabled
                 >
-                  CHECKOUT • LKR 0
+                  CHECKOUT • $0.00
                 </button>
               )}
             </div>

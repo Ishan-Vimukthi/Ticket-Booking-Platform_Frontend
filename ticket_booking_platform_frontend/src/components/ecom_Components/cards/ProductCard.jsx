@@ -56,13 +56,6 @@ const ProductCard = ({ product }) => {
           {product.name}
         </h3>
         
-        <div className="flex items-center mb-2">
-          <span className="text-sm text-gray-500">Color:</span>
-          <span className="ml-2 text-sm font-medium text-gray-700">
-            {product.color || 'Gray'}
-          </span>
-        </div>
-
         <div className="mb-3">
           <span className="text-sm text-gray-500">Size:</span>
           <div className="flex space-x-2 mt-1">
@@ -85,7 +78,7 @@ const ProductCard = ({ product }) => {
         <div className="flex items-center justify-between mt-3">
           <div>
             <span className="text-lg font-bold text-gray-900">
-              LKR {product.price.toLocaleString()}
+              ${product.price.toFixed(2)}
             </span>
           </div>
           
@@ -103,10 +96,9 @@ const ProductCard = ({ product }) => {
 
 ProductCard.defaultProps = {
   product: {
-    name: "Knitted Oversize Sweatpant",
-    price: 3960.00,
+    name: "Electronica Tee",
+    price: 18.99,
     image: "tshirt1.jpg",
-    color: "Gray",
     sizes: ["S", "M", "L", "XL"]
   }
 };

@@ -57,10 +57,10 @@ const ShopNav = ({ onSearch }) => {
             )}
           </div>
 
-          {/* Center Section - Product name on product page */}
+          {/* Center Section - Simple "Product Details" text on product page */}
           {isProductPage && (
-            <div className="hidden md:flex text-white font-medium truncate max-w-xs">
-              Acid Wash Jagger
+            <div className="hidden md:flex text-white font-medium">
+              Product Details
             </div>
           )}
 

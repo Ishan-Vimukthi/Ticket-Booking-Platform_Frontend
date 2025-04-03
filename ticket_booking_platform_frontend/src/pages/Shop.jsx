@@ -1,76 +1,99 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import ProductCard from "../components/ecom_Components/cards/ProductCard";
 import ShopNav from "../components/ecom_Components/navigation/ShopNav";
 import Footer from "../components/Footer";
 import CartSlider from "../components/ecom_Components/cart/CartSlider";
 import { getProductImage } from "../utils/images";
 import { heroBg, defaultImage } from "../utils/images";
+import { ToastContainer } from "react-toastify";
 
 const products = [
   {
     id: 1,
-    name: "Men's Premium Jacket",
-    price: 89.99,
+    name: "Electronica Tee",
+    price: 18.99,
     image: "tshirt1.jpg",
     category: "men",
     rating: 4.5,
-    colors: ["black", "navy", "olive"],
     sizes: ["S", "M", "L", "XL"]
   },
   {
     id: 2,
-    name: "Women's Summer Dress",
-    price: 49.99,
+    name: "Classic Tee - White",
+    price: 14.99,
     image: "tshirt2.jpg",
     category: "women",
     rating: 4.2,
-    colors: ["red", "white", "blue"],
     sizes: ["S", "M", "L", "XL"]
   },
   {
     id: 3,
-    name: "Unisex Sneakers",
-    price: 65.99,
+    name: "Moss Green - Earth",
+    price: 16.50,
     image: "tshirt3.png",
-    category: "footwear",
+    category: "unisex",
     rating: 4.7,
-    colors: ["white", "black"],
     sizes: ["S", "M", "L", "XL"]
   },
   {
     id: 4,
-    name: "Wireless Headphones",
-    price: 129.99,
+    name: "Transmission Tee",
+    price: 19.99,
     image: "tshirt4.png",
-    category: "electronics",
+    category: "unisex",
     rating: 4.8,
-    colors: ["black", "silver"],
     sizes: ["S", "M", "L", "XL"]
   },
   {
     id: 5,
-    name: "oversized tee",
-    price: 100.99,
+    name: "Coast Tee",
+    price: 15.75,
     image: "tshirt5.jpg",
-    category: "electronics",
-    rating: 4.8,
-    colors: ["black", "silver"],
+    category: "unisex",
+    rating: 4.3,
     sizes: ["S", "M", "L", "XL"]
   },
   {
     id: 6,
-    name: "oversized tee",
-    price: 100.99,
+    name: "Culture Tree",
+    price: 17.25,
     image: "tshirt6.jpg",
-    category: "electronics",
-    rating: 4.8,
-    colors: ["black", "silver"],
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 7,
+    name: "Down Beat tee",
+    price: 17.00,
+    image: "tshirt7.jpg",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 8,
+    name: "living in stereo",
+    price: 20.00,
+    image: "tshirt8.png",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 9,
+    name: "Studio tee",
+    price: 15.00,
+    image: "tshirt9.png",
+    category: "unisex",
+    rating: 4.6,
     sizes: ["S", "M", "L", "XL"]
   }
 ];
 
 const Shop = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const productsSectionRef = useRef(null);
 
   const filteredProducts = products.filter((product) => {
     if (!product || !product.name) return false;
@@ -79,38 +102,45 @@ const Shop = () => {
     return productName.includes(query);
   });
 
+  const handleShopCollectionClick = () => {
+    productsSectionRef.current?.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <ShopNav onSearch={setSearchQuery} />
       <CartSlider />
+      <ToastContainer/>
 
-      <div className="relative h-[80vh] bg-gray-900 overflow-hidden pt-16">
+      <div className="relative h-[80vh] overflow-hidden pt-16">
         <div className="absolute inset-0">
           <img
-            className="w-full h-full object-cover opacity-70"
+            className="w-full h-full object-cover"
             src={heroBg}
-            alt="BigIdea hero"
+            alt="Music event background"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = defaultImage;
             }}
           />
-          <div className="absolute inset-0 bg-gray-900 mix-blend-multiply"></div>
         </div>
         <div className="relative h-full flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-4">
-            WHEREVER & WHENEVER
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-8">
+            CURATED SOUNDSCAPES
           </h1>
-          <p className="text-xl md:text-2xl text-white mb-8">
-            BRAND OF YOUR LIFESTYLE
-          </p>
-          <button className="px-8 py-3 border border-transparent text-base font-medium rounded-md text-gray-900 bg-white hover:bg-gray-100 md:py-4 md:text-lg md:px-10 transition-all duration-300 transform hover:scale-105">
+          <button 
+            onClick={handleShopCollectionClick}
+            className="px-8 py-3 border border-transparent text-base font-medium rounded-md text-gray-900 bg-white hover:bg-gray-100 md:py-4 md:text-lg md:px-10 transition-all duration-300 transform hover:scale-105 mt-4"
+          >
             Shop Collection
           </button>
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-12">
+      <main ref={productsSectionRef} className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Our Products</h1>
           <p className="text-gray-600 mt-2">
