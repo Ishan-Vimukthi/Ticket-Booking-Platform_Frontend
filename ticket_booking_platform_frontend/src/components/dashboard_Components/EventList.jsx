@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import EditEventForm from '../dashboard_Components/editEventForm';
 
 const EventList = () => {
@@ -12,7 +11,6 @@ const EventList = () => {
   const [eventToEdit, setEventToEdit] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Base64 encoded SVG fallback image
   const fallbackImage = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgNDAwIDIwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSI+RXZlbnQgSW1hZ2U8L3RleHQ+PC9zdmc+';
 
   const fetchEvents = async () => {
@@ -20,22 +18,27 @@ const EventList = () => {
       const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
       const response = await fetch(`${API_BASE}/api/events`, {
         headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include' // Add this if your API requires cookies
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
       });
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json();
         throw new Error(errorData.message || `Server returned ${response.status}`);
       }
       
       const data = await response.json();
-      // Sort events by createdAt date in descending order (newest first)
-      const sortedEvents = data.sort((a, b) => {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
-      return sortedEvents;
+      
+      // Handle different response structures
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data.data && Array.isArray(data.data)) {
+        return data.data;
+      } else if (data.events && Array.isArray(data.events)) {
+        return data.events;
+      }
+      throw new Error('Unexpected API response format');
     } catch (error) {
       console.error('Fetch error:', error);
       throw new Error(error.message || 'Failed to fetch events. Please check your connection and try again.');
@@ -49,12 +52,12 @@ const EventList = () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
-        },
-        credentials: 'include' // Add this if your API requires cookies
+        }
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to delete event: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to delete event: ${response.status}`);
       }
       
       return await response.json();
@@ -66,20 +69,18 @@ const EventList = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    const signal = controller.signal;
     let mounted = true;
 
     const loadEvents = async () => {
       try {
         const data = await fetchEvents();
         if (mounted) {
-          setEvents(data);
+          setEvents(data || []);
           setError(null);
         }
       } catch (err) {
         if (mounted) {
           setError(err.message);
-          // If connection refused, suggest checking backend
           if (err.message.includes('Failed to fetch') || err.message.includes('connection refused')) {
             setError('Could not connect to server. Please make sure the backend is running.');
           }
@@ -103,11 +104,12 @@ const EventList = () => {
   const handleDelete = async () => {
     try {
       await deleteEvent(eventToDelete);
-      setEvents(events.filter(event => event._id !== eventToDelete));
+      setEvents(prevEvents => prevEvents.filter(event => event._id !== eventToDelete));
       setDeleteModalOpen(false);
+      window.location.reload();
     } catch (err) {
       console.error('Delete error:', err);
-      alert('Failed to delete event. Please try again.');
+      alert(err.message || 'Failed to delete event. Please try again.');
     }
   };
 
@@ -122,14 +124,12 @@ const EventList = () => {
 
   const handleEventUpdate = (updatedEvent) => {
     setEvents(prevEvents => {
-      const updatedEvents = prevEvents.map(event => 
+      return prevEvents.map(event => 
         event._id === updatedEvent._id ? updatedEvent : event
       );
-      return updatedEvents.sort((a, b) => {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
     });
     setEditModalOpen(false);
+    window.location.reload();
   };
 
   if (loading) {
@@ -174,7 +174,7 @@ const EventList = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {events.length === 0 ? (
+      {!Array.isArray(events) || events.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"
@@ -190,14 +190,14 @@ const EventList = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => (
-            <div key={event._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100">
+            <div key={event._id || Math.random()} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100">
               <div className="relative h-48 bg-gray-100 overflow-hidden">
                 {event.image ? (
                   <img
                     src={event.image.startsWith('http') ? event.image : 
                       `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${event.image}`
                     }
-                    alt={event.eventName}
+                    alt={event.eventName || 'Event image'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.src = fallbackImage;
@@ -206,8 +206,8 @@ const EventList = () => {
                   />
                 ) : (
                   <img
-                    src={fallbackImage}
-                    alt="Event placeholder"
+                    src={event.image || fallbackImage}
+                    alt={event.eventName}
                     className="w-full h-full object-contain p-4"
                   />
                 )}
@@ -218,7 +218,7 @@ const EventList = () => {
 
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-2 truncate">
-                  {event.eventName}
+                  {event.eventName || 'Untitled Event'}
                 </h2>
                 <p className="text-gray-600 mb-4 line-clamp-2 min-h-[40px]">
                   {event.eventDescription || 'No description provided'}
@@ -229,12 +229,12 @@ const EventList = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <span>
-                    {new Date(event.eventDate).toLocaleDateString('en-US', {
+                    {event.eventDate ? new Date(event.eventDate).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
-                    })}{' '}
-                    at {event.eventTime}
+                    }) : 'Date not set'}{' '}
+                    {event.eventTime && `at ${event.eventTime}`}
                   </span>
                 </div>
 
@@ -243,7 +243,7 @@ const EventList = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="truncate">{event.venue}</span>
+                  <span className="truncate">{event.venue || 'Location not specified'}</span>
                 </div>
 
                 <div className="flex justify-between items-center border-t pt-4">
