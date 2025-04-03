@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { MdDateRange, MdLocationOn, MdHome, MdClose } from "react-icons/md";
 import NavBar from "../components/NavBar";
@@ -15,6 +15,7 @@ const EventDetail = () => {
   const [seatMapData, setSeatMapData] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [loadingSeatMap, setLoadingSeatMap] = useState(false);
+  const [svgContainer, setSvgContainer] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,7 +69,7 @@ const EventDetail = () => {
     }
   };
 
-  const handleSeatSelection = (seatId) => {
+  const handleSeatSelection = useCallback((seatId) => {
     setSelectedSeats(prev => {
       if (prev.includes(seatId)) {
         return prev.filter(id => id !== seatId);
@@ -76,9 +77,9 @@ const EventDetail = () => {
         return [...prev, seatId];
       }
     });
-  };
+  }, []);
 
-  const calculateTotal = () => {
+  const calculateTotal = useCallback(() => {
     if (!seatMapData || selectedSeats.length === 0) return 0;
     
     return selectedSeats.reduce((total, seatId) => {
@@ -94,7 +95,7 @@ const EventDetail = () => {
       
       return total + price;
     }, 0);
-  };
+  }, [seatMapData, selectedSeats, event?.ticketTypes]);
 
   const handleProceedToCheckout = () => {
     console.log("Proceeding to checkout with seats:", selectedSeats);
@@ -106,6 +107,41 @@ const EventDetail = () => {
     const venue = venues.find(v => v._id === venueId);
     return venue ? venue.name : venueId;
   };
+
+  // Handle SVG container ref
+  const handleSvgContainerRef = useCallback((node) => {
+    if (node) {
+      setSvgContainer(node);
+    }
+  }, []);
+
+  // Set up event listeners for the SVG
+  useEffect(() => {
+    if (!svgContainer || !seatMapData) return;
+
+    const handleClick = (e) => {
+      if (e.target.id && e.target.id.startsWith('seat_')) {
+        const seatId = e.target.id.replace('seat_', '');
+        handleSeatSelection(seatId);
+        
+        // Toggle visual selection
+        if (selectedSeats.includes(seatId)) {
+          e.target.style.fill = '#3b82f6';
+          e.target.style.stroke = '#1d4ed8';
+        } else {
+          e.target.style.fill = '';
+          e.target.style.stroke = '';
+        }
+      }
+    };
+
+    svgContainer.addEventListener('click', handleClick);
+    
+    // Clean up
+    return () => {
+      svgContainer.removeEventListener('click', handleClick);
+    };
+  }, [svgContainer, seatMapData, handleSeatSelection, selectedSeats]);
 
   if (loading) return <div className="text-center p-10 text-gray-500">Loading event details...</div>;
   if (error) return <div className="text-center p-10 text-red-500">Error: {error}</div>;
@@ -187,9 +223,14 @@ const EventDetail = () => {
               <div className="mb-6">
                 {event.ticketTypes && event.ticketTypes.length > 0 ? (
                   event.ticketTypes.map((ticket, index) => (
-                    <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
-                      <span className="text-gray-700">{ticket.type}</span>
-                      <span className="font-semibold text-blue-600">USD {ticket.price.toLocaleString()}</span>
+                    <div key={index} className="py-3 border-b border-gray-200 last:border-b-0">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-700 font-medium">{ticket.type}</span>
+                        <span className="font-semibold text-blue-600">USD {ticket.price.toLocaleString()}</span>
+                      </div>
+                      {ticket.description && (
+                        <p className="text-xs text-gray-500 mt-1">{ticket.description}</p>
+                      )}
                     </div>
                   ))
                 ) : (
@@ -258,6 +299,9 @@ const EventDetail = () => {
                       <div className="text-xl font-bold text-blue-600">
                         USD {category.price.toLocaleString()}
                       </div>
+                      {category.description && (
+                        <p className="text-sm text-gray-600 mt-2">{category.description}</p>
+                      )}
                     </div>
                   ))}
               </div>
@@ -266,6 +310,7 @@ const EventDetail = () => {
               <div className="mb-8 text-center">
                 <div className="text-xl font-bold bg-gray-100 py-2 mb-4 rounded">STAGE</div>
                 <div 
+                  ref={handleSvgContainerRef}
                   className="seat-map-container mx-auto"
                   style={{ maxWidth: '800px' }}
                   dangerouslySetInnerHTML={{ __html: seatMapData.svgTemplate }}
