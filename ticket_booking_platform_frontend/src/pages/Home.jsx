@@ -7,7 +7,7 @@ import EventCard from "../components/EventCard";
 
 const Home = () => {
   const [events, setEvents] = useState([]);
-  const [venues, setVenues] = useState([]); // Added venues state
+  const [venues, setVenues] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,7 +18,6 @@ const Home = () => {
       try {
         const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
         
-        // Fetch both events and venues in parallel like in Events.jsx
         const [eventsResponse, venuesResponse] = await Promise.all([
           fetch(`${API_BASE}/api/events`),
           fetch(`${API_BASE}/api/venues`)
@@ -31,11 +30,9 @@ const Home = () => {
         const eventsData = await eventsResponse.json();
         const venuesData = await venuesResponse.json();
 
-        // Handle the response structure with data.data if exists
         const eventsArray = eventsData.data || eventsData;
         const venuesArray = venuesData.data || venuesData;
 
-        // Filter events for this month
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth();
         const currentYear = currentDate.getFullYear();
@@ -45,13 +42,13 @@ const Home = () => {
           return (
             eventDate.getFullYear() === currentYear && 
             eventDate.getMonth() === currentMonth &&
-            event.status !== "Cancelled" // Exclude cancelled events
+            event.status !== "Cancelled"
           );
         });
 
         setEvents(filteredData);
         setFilteredEvents(filteredData);
-        setVenues(venuesArray); // Set venues data
+        setVenues(venuesArray);
       } catch (err) {
         setError(err.message);
         console.error("Fetch error:", err);
@@ -63,7 +60,6 @@ const Home = () => {
     fetchData();
   }, []);
 
-  // Handle search filtering
   useEffect(() => {
     if (!searchQuery) {
       setFilteredEvents(events);
@@ -72,7 +68,7 @@ const Home = () => {
       const searchResults = events.filter(
         (event) =>
           event.eventName.toLowerCase().includes(lowerSearch) ||
-          (event.venue && event.venue.toLowerCase().includes(lowerSearch)) || // Added null check
+          (event.venue && event.venue.toLowerCase().includes(lowerSearch)) ||
           (event.eventDescription && 
            event.eventDescription.toLowerCase().includes(lowerSearch))
       );
@@ -80,8 +76,33 @@ const Home = () => {
     }
   }, [searchQuery, events]);
 
-  if (loading) return <p className="text-center text-gray-600">Loading events...</p>;
-  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
+  // Loading animation component
+  const LoadingAnimation = () => (
+    <div className="flex flex-col items-center justify-center space-y-4 py-12">
+      <div className="flex space-x-2">
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      </div>
+      <p className="text-gray-600 text-lg">Loading events...</p>
+    </div>
+  );
+
+  if (loading) return (
+    <div className="min-h-screen flex flex-col">
+      <NavBar />
+      <LoadingAnimation />
+      <Footer />
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex flex-col">
+      <NavBar />
+      <p className="text-center text-red-500 py-12">{error}</p>
+      <Footer />
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -96,11 +117,11 @@ const Home = () => {
                 <EventCard 
                   key={event._id} 
                   event={event} 
-                  venues={venues} // Pass venues data to EventCard
+                  venues={venues}
                 />
               ))
             ) : (
-              <p className="text-center text-gray-600 col-span-full">
+              <p className="text-center text-gray-600 col-span-full py-12">
                 {searchQuery ? "No matching events found." : "No upcoming events this month."}
               </p>
             )}
