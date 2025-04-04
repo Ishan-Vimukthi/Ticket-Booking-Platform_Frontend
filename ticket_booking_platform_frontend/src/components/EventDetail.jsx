@@ -347,7 +347,7 @@ const EventDetail = () => {
                 </div>
                 
                 <div className="mb-8 text-center">
-                  <div className="text-xl font-bold bg-gray-100 py-2 mb-4 rounded">STAGE</div>
+            
                   <div 
                     ref={handleSvgContainerRef}
                     className="seat-map-container mx-auto"
