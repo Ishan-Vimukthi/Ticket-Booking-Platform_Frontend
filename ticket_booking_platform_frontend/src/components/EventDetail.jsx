@@ -91,23 +91,29 @@ const EventDetail = () => {
     });
   }, []);
 
-  const calculateTotal = useCallback(() => {
-    if (!seatMapData || selectedSeats.length === 0) return 0;
+  const getSeatPrice = useCallback((seatId) => {
+    if (!seatMapData || !event?.ticketTypes) return 0;
     
+    const rowLetter = seatId.charAt(0);
+    const rowNumber = rowLetter.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+    
+    // Find category based on row number
+    let currentRowCount = 0;
+    const category = seatMapData.seatMap.categories.find(cat => {
+      currentRowCount += cat.rowCount;
+      return rowNumber <= currentRowCount;
+    });
+    
+    // Match category name with ticket type
+    const ticketType = category ? event.ticketTypes.find(t => t.type === category.name) : null;
+    return ticketType?.price || 0;
+  }, [seatMapData, event?.ticketTypes]);
+
+  const calculateTotal = useCallback(() => {
     return selectedSeats.reduce((total, seatId) => {
-      const rowLetter = seatId.charAt(0);
-      const category = seatMapData.seatMap.categories.find(cat => {
-        const startRow = 'A'.charCodeAt(0);
-        const endRow = String.fromCharCode(startRow + (cat.rowCount || 0) - 1);
-        return rowLetter >= 'A' && rowLetter <= endRow;
-      });
-      
-      const ticketType = category ? event.ticketTypes?.find(t => t.type === category.name) : null;
-      const price = ticketType?.price || 0;
-      
-      return total + price;
+      return total + getSeatPrice(seatId);
     }, 0);
-  }, [seatMapData, selectedSeats, event?.ticketTypes]);
+  }, [selectedSeats, getSeatPrice]);
 
   const handleProceedToCheckout = () => {
     console.log("Proceeding to checkout with seats:", selectedSeats);
@@ -120,40 +126,119 @@ const EventDetail = () => {
     return venue ? venue.name : venueId;
   };
 
-  // Handle SVG container ref
+  // Process SVG to add interactivity
+  const processSvg = useCallback((svgString) => {
+    if (!svgString) return svgString;
+    
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    const svgElement = doc.querySelector('svg');
+    
+    if (!svgElement) return svgString;
+    
+    const seatElements = svgElement.querySelectorAll('[class*="seat"], rect, circle, path');
+    
+    seatElements.forEach(seat => {
+      let seatId = seat.getAttribute('id') || 
+                 seat.getAttribute('data-seat') || 
+                 `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 100)}`;
+      
+      seat.setAttribute('id', `seat_${seatId}`);
+      seat.style.cursor = 'pointer';
+      seat.style.transition = 'fill 0.2s, stroke 0.2s';
+      
+      const originalFill = seat.getAttribute('fill') || '#3b82f6';
+      const originalStroke = seat.getAttribute('stroke') || '#1d4ed8';
+      
+      seat.setAttribute('data-original-fill', originalFill);
+      seat.setAttribute('data-original-stroke', originalStroke);
+      
+      if (selectedSeats.includes(seatId)) {
+        seat.setAttribute('fill', '#10b981');
+        seat.setAttribute('stroke', '#059669');
+      }
+    });
+    
+    return new XMLSerializer().serializeToString(svgElement);
+  }, [selectedSeats]);
+
   const handleSvgContainerRef = useCallback((node) => {
     if (node) {
       setSvgContainer(node);
     }
   }, []);
 
-  // Set up event listeners for the SVG
   useEffect(() => {
     if (!svgContainer || !seatMapData) return;
 
     const handleClick = (e) => {
-      if (e.target.id && e.target.id.startsWith('seat_')) {
-        const seatId = e.target.id.replace('seat_', '');
+      const seatElement = e.target.closest('[id^="seat_"]');
+      if (seatElement) {
+        const seatId = seatElement.id.replace('seat_', '');
         handleSeatSelection(seatId);
         
-        // Toggle visual selection
         if (selectedSeats.includes(seatId)) {
-          e.target.style.fill = '#3b82f6';
-          e.target.style.stroke = '#1d4ed8';
+          seatElement.style.fill = seatElement.getAttribute('data-original-fill');
+          seatElement.style.stroke = seatElement.getAttribute('data-original-stroke');
         } else {
-          e.target.style.fill = '';
-          e.target.style.stroke = '';
+          seatElement.style.fill = '#10b981';
+          seatElement.style.stroke = '#059669';
         }
       }
     };
 
     svgContainer.addEventListener('click', handleClick);
     
-    // Clean up
     return () => {
       svgContainer.removeEventListener('click', handleClick);
     };
   }, [svgContainer, seatMapData, handleSeatSelection, selectedSeats]);
+
+  const renderSelectedSeats = () => {
+    if (!seatMapData || selectedSeats.length === 0) {
+      return <p className="text-gray-500 text-center py-4">No seats selected yet</p>;
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+        {selectedSeats.map((seatId, index) => {
+          const rowLetter = seatId.charAt(0);
+          const seatNumber = seatId.substring(1);
+          const price = getSeatPrice(seatId);
+          
+          // Find category for border color
+          const rowNumber = rowLetter.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+          let currentRowCount = 0;
+          const category = seatMapData.seatMap.categories.find(cat => {
+            currentRowCount += cat.rowCount;
+            return rowNumber <= currentRowCount;
+          });
+          
+          return (
+            <div 
+              key={index} 
+              className="border p-3 rounded-lg flex justify-between items-center"
+              style={{ borderLeft: `4px solid ${category?.color || '#ccc'}` }}
+            >
+              <div className="flex items-center">
+                <div className="font-bold mr-2">{rowLetter}{seatNumber}</div>
+                <div className="text-sm text-gray-600">{category?.name || 'General'}</div>
+              </div>
+              <div className="font-bold text-blue-600">
+                USD {price.toLocaleString()}
+              </div>
+              <button 
+                onClick={() => handleSeatSelection(seatId)}
+                className="ml-2 text-red-500 hover:text-red-700"
+              >
+                ×
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   if (loading) return (
     <div className="min-h-screen flex flex-col bg-[#06122A] text-white">
@@ -347,57 +432,17 @@ const EventDetail = () => {
                 </div>
                 
                 <div className="mb-8 text-center">
-            
                   <div 
                     ref={handleSvgContainerRef}
                     className="seat-map-container mx-auto"
                     style={{ maxWidth: '800px' }}
-                    dangerouslySetInnerHTML={{ __html: seatMapData.svgTemplate }}
+                    dangerouslySetInnerHTML={{ __html: processSvg(seatMapData.svgTemplate) }}
                   />
                 </div>
                 
                 <div className="bg-gray-50 p-4 rounded-lg mb-6 border">
                   <h4 className="font-semibold text-lg mb-4">Selected Seats ({selectedSeats.length})</h4>
-                  {selectedSeats.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                      {selectedSeats.map((seatId, index) => {
-                        const rowLetter = seatId.charAt(0);
-                        const seatNumber = seatId.substring(1);
-                        const category = seatMapData.seatMap.categories.find(cat => {
-                          const startRow = 'A'.charCodeAt(0);
-                          const endRow = String.fromCharCode(startRow + (cat.rowCount || 0) - 1);
-                          return rowLetter >= 'A' && rowLetter <= endRow;
-                        });
-                        
-                        const ticketType = category ? event.ticketTypes?.find(t => t.type === category.name) : null;
-                        const price = ticketType?.price || 0;
-                        
-                        return (
-                          <div 
-                            key={index} 
-                            className="border p-3 rounded-lg flex justify-between items-center"
-                            style={{ borderLeft: `4px solid ${category?.color || '#ccc'}` }}
-                          >
-                            <div className="flex items-center">
-                              <div className="font-bold mr-2">{rowLetter}-{seatNumber}</div>
-                              <div className="text-sm text-gray-600">{category?.name || 'General'}</div>
-                            </div>
-                            <div className="font-bold text-blue-600">
-                              USD {price.toLocaleString()}
-                            </div>
-                            <button 
-                              onClick={() => handleSeatSelection(seatId)}
-                              className="ml-2 text-red-500 hover:text-red-700"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-4">No seats selected yet</p>
-                  )}
+                  {renderSelectedSeats()}
                 </div>
                 
                 <div className="flex justify-between items-center border-t pt-4">
