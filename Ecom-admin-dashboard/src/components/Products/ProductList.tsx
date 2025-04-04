@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Plus, AlertTriangle } from 'lucide-react';
 import DataTable from '../Common/Table/DataTable';
 import ImagePreview from './ImagePreview';
 import LoadingSpinner from '../Loading/LoadingSpinner';
 import AddProductForm from './AddProductForm';
+import EditProductForm from './EditProductForm'; // Import the EditProductForm
 import ConfirmationModal from '../Common/Modal/ConfirmationModal';
 
 interface Product {
@@ -36,6 +37,10 @@ const ProductList = () => {
   const [selectedImages, setSelectedImages] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+
+  const categoryMapRef = useRef<Record<string, string>>({});
+
   const [confirmation, setConfirmation] = useState<ConfirmationConfig>({
     isOpen: false,
     title: '',
@@ -47,7 +52,16 @@ const ProductList = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    products.forEach(product => {
+      if (product.category && product.category._id && product.category.name) {
+        categoryMapRef.current[product.category._id] = product.category.name;
+      }
+    });
+  }, [products]);
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -56,6 +70,12 @@ const ProductList = () => {
       const data = await response.json();
       if (data.status === "SUCCESS") {
         setProducts(data.data);
+
+        data.data.forEach((product: Product) => {
+          if (product.category && product.category._id && product.category.name) {
+            categoryMapRef.current[product.category._id] = product.category.name;
+          }
+        });
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -64,19 +84,97 @@ const ProductList = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/category/all-categories');
+      const data = await response.json();
+      if (data.status === "SUCCESS") {
+        data.data.forEach((category: { _id: string; name: string }) => {
+          categoryMapRef.current[category._id] = category.name;
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
   const handleImageClick = (images: string[]) => {
     setSelectedImages(images);
   };
 
   const handleAddProduct = (newProduct: Product) => {
-    setProducts(prev => [...prev, newProduct]);
+    let categoryId = '';
+
+    if (typeof newProduct.category === 'string') {
+      categoryId = newProduct.category;
+    } else if (newProduct.category && typeof newProduct.category === 'object') {
+      categoryId = newProduct.category._id || '';
+    }
+
+    const validatedProduct = {
+      ...newProduct,
+      category: {
+        _id: categoryId,
+        name: categoryMapRef.current[categoryId] || 'Loading...'
+      }
+    };
+
+    if (!categoryMapRef.current[categoryId] && categoryId) {
+      fetchCategoryById(categoryId, validatedProduct._id);
+    }
+
+    setProducts(prev => [...prev, validatedProduct]);
+  };
+
+  const fetchCategoryById = async (categoryId: string, productId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/category/${categoryId}`);
+      const data = await response.json();
+
+      if (data.status === "SUCCESS" && data.data) {
+        categoryMapRef.current[categoryId] = data.data.name;
+
+        setProducts(prev => prev.map(p =>
+          p._id === productId
+            ? { ...p, category: { _id: categoryId, name: data.data.name } }
+            : p
+        ));
+      }
+    } catch (error) {
+      console.error(`Error fetching category ${categoryId}:`, error);
+    }
+  };
+
+  const handleUpdateProduct = (updatedProduct: Product) => {
+    setProducts(prev =>
+      prev.map(product =>
+        product._id === updatedProduct._id ? updatedProduct : product
+      )
+    );
+    setProductToEdit(null);
   };
 
   const columns = [
-    { header: '#', accessor: (item: Product) => item._id },
+    {
+      header: '#',
+      accessor: (item: Product, index: number) => index + 1
+    },
     { header: 'Name', accessor: 'name' },
     { header: 'Product Code', accessor: 'productCode' },
-    { header: 'Category', accessor: (item: Product) => item.category.name },
+    {
+      header: 'Category',
+      accessor: (item: Product) => {
+        if (item.category?.name) {
+          return item.category.name;
+        }
+
+        const categoryId = typeof item.category === 'string'
+          ? item.category
+          : item.category?._id;
+
+        return categoryId ? categoryMapRef.current[categoryId] || 'Loading...' : 'Unknown';
+      }
+    },
     { header: 'Size', accessor: 'size' },
     { header: 'Color', accessor: 'color' },
     { header: 'Price', accessor: (item: Product) => `$${item.price}` },
@@ -94,11 +192,10 @@ const ProductList = () => {
   ];
 
   const handleEdit = (product: Product) => {
-    console.log('Edit product:', product);
+    setProductToEdit(product);
   };
 
   const handleDelete = (product: Product) => {
-    // Show confirmation modal before deleting
     setConfirmation({
       isOpen: true,
       title: 'Confirm Deletion',
@@ -112,32 +209,26 @@ const ProductList = () => {
 
   const performSoftDelete = async (product: Product) => {
     try {
-      // Get token from localStorage or your auth state
-      const token = localStorage.getItem('token'); // Adjust based on how you store tokens
-      
+      const token = localStorage.getItem('token');
+
       const response = await fetch(`http://localhost:3000/product/delete-product/${product._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       const data = await response.json();
-      
+
       if (data.status === "SUCCESS") {
-        // Remove the product from the UI state
         setProducts(prevProducts => prevProducts.filter(p => p._id !== product._id));
-        
-        // Show success message (you can add a toast notification here)
         console.log('Product deleted successfully');
       } else {
-        // Show error message
         console.error('Failed to delete product:', data.message);
       }
     } catch (error) {
       console.error('Error deleting product:', error);
     } finally {
-      // Close the confirmation modal
       closeConfirmationModal();
     }
   };
@@ -194,7 +285,14 @@ const ProductList = () => {
             />
           )}
 
-          {/* Reusable Confirmation Modal */}
+          {productToEdit && (
+            <EditProductForm
+              product={productToEdit}
+              onClose={() => setProductToEdit(null)}
+              onUpdate={handleUpdateProduct}
+            />
+          )}
+
           <ConfirmationModal
             isOpen={confirmation.isOpen}
             title={confirmation.title}

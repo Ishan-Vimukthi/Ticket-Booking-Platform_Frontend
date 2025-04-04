@@ -7,6 +7,8 @@ import GenderChart from './components/Dashboard/Charts/GenderChart';
 import CategoryChart from './components/Dashboard/Charts/CategoryChart';
 import LoginScreen from './components/Auth/LoginScreen';
 import ProductList from './components/Products/ProductList';
+import CategoryList from './components/Categories/CategoryList';
+import CustomerList from './components/Customers/CustomerList';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -82,6 +84,10 @@ function App() {
     switch (currentPage) {
       case 'products':
         return <ProductList />;
+      case 'categories':
+        return <CategoryList />;
+      case 'customers':
+        return <CustomerList />;
       default:
         return (
           <main className="p-6">

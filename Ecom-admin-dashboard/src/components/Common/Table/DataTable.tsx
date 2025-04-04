@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Column<T> {
   header: string;
-  accessor: keyof T | ((item: T) => React.ReactNode);
+  accessor: keyof T | ((item: T, index: number) => React.ReactNode);
 }
 
 interface DataTableProps<T> {
@@ -94,7 +94,7 @@ const DataTable = <T extends Record<string, any>>({
                       className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                     >
                       {typeof column.accessor === 'function'
-                        ? column.accessor(item)
+                        ? column.accessor(item, startIndex + rowIndex)
                         : item[column.accessor]}
                     </td>
                   ))}
