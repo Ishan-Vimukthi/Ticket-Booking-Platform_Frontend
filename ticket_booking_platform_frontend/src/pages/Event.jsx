@@ -11,6 +11,18 @@ const Events = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Loading animation component
+  const LoadingAnimation = () => (
+    <div className="flex flex-col items-center justify-center space-y-4 py-12">
+      <div className="flex space-x-2">
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      </div>
+      <p className="text-gray-600 text-lg">Loading events...</p>
+    </div>
+  );
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -28,9 +40,6 @@ const Events = () => {
 
         const eventsData = await eventsResponse.json();
         const venuesData = await venuesResponse.json();
-
-        console.log("Fetched events:", eventsData);
-        console.log("Fetched venues:", venuesData);
 
         // Get today's date at midnight to avoid timezone issues
         const currentDate = new Date();
@@ -60,8 +69,23 @@ const Events = () => {
     fetchData();
   }, []);
 
-  if (loading) return <p className="text-center text-gray-600">Loading events...</p>;
-  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
+  if (loading) return (
+    <div>
+      <NavBar />
+      <MiddleTextEvents />
+      <LoadingAnimation />
+      <Footer />
+    </div>
+  );
+
+  if (error) return (
+    <div>
+      <NavBar />
+      <MiddleTextEvents />
+      <p className="text-center text-red-500 py-12">{error}</p>
+      <Footer />
+    </div>
+  );
 
   return (
     <div>
@@ -74,7 +98,7 @@ const Events = () => {
               <EventCard key={event._id} event={event} venues={venues} />
             ))
           ) : (
-            <p className="text-center text-gray-600 col-span-full">
+            <p className="text-center text-gray-600 col-span-full py-12">
               No upcoming events available.
             </p>
           )}
