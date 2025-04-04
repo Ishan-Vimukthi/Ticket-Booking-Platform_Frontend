@@ -37,7 +37,8 @@ const EventCard = ({ event, venues = [] }) => {
       <div className="p-4">
         <h2 className="text-lg font-semibold text-gray-900 mb-1 truncate">{event.eventName}</h2>
         
-        <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+        {/* Updated description with single line and text wrapping */}
+        <p className="text-gray-600 text-sm mb-2 whitespace-nowrap overflow-hidden text-ellipsis">
           {event.eventDescription}
         </p>
 

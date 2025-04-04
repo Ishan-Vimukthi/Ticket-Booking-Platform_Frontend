@@ -241,7 +241,6 @@ const EventDetail = () => {
               <h3 className="font-bold text-gray-900 mb-3">Ticket Policy</h3>
               <ul className="text-sm text-gray-600 space-y-2">
                 <li>• Only the initial email provided by BigIdea will be accepted as proof of purchase.</li>
-                <li>• Valid NIC or Passport will be required if needed during the process of redeeming.</li>
                 <li>• Tickets are non-refundable and non-transferable.</li>
                 <li>• The event is subject to cancellation or rescheduling due to unforeseen circumstances.</li>
               </ul>
