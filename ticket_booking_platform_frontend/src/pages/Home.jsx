@@ -81,7 +81,7 @@ const Home = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredEvents.length > 0 ? (
               filteredEvents.map((event) => (
-                <EventCard key={event._id} event={event} />
+                <EventCard  key={event._id} event={event} venues={venues} />
               ))
             ) : (
               <p className="text-center text-gray-600 col-span-full">
