@@ -17,6 +17,18 @@ const EventDetail = () => {
   const [loadingSeatMap, setLoadingSeatMap] = useState(false);
   const [svgContainer, setSvgContainer] = useState(null);
 
+  // Loading animation component
+  const LoadingAnimation = ({ text = "Loading..." }) => (
+    <div className="flex flex-col items-center justify-center space-y-4 py-12">
+      <div className="flex space-x-2">
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+        <div className="w-4 h-4 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      </div>
+      <p className="text-gray-600 text-lg">{text}</p>
+    </div>
+  );
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -143,9 +155,29 @@ const EventDetail = () => {
     };
   }, [svgContainer, seatMapData, handleSeatSelection, selectedSeats]);
 
-  if (loading) return <div className="text-center p-10 text-gray-500">Loading event details...</div>;
-  if (error) return <div className="text-center p-10 text-red-500">Error: {error}</div>;
-  if (!event) return <div className="text-center p-10 text-gray-500">Event not found</div>;
+  if (loading) return (
+    <div className="min-h-screen flex flex-col bg-[#06122A] text-white">
+      <NavBar />
+      <LoadingAnimation text="Loading event details..." />
+      <Footer />
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex flex-col bg-[#06122A] text-white">
+      <NavBar />
+      <div className="text-center p-10 text-red-500">{error}</div>
+      <Footer />
+    </div>
+  );
+
+  if (!event) return (
+    <div className="min-h-screen flex flex-col bg-[#06122A] text-white">
+      <NavBar />
+      <div className="text-center p-10 text-gray-500">Event not found</div>
+      <Footer />
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#06122A] text-white">
@@ -243,7 +275,12 @@ const EventDetail = () => {
                 onClick={fetchSeatMap}
                 disabled={loadingSeatMap}
               >
-                {loadingSeatMap ? "Loading Seat Map..." : "Buy Tickets"}
+                {loadingSeatMap ? (
+                  <span className="flex items-center justify-center">
+                    <span className="animate-spin mr-2">🌀</span>
+                    Loading Seat Map...
+                  </span>
+                ) : "Buy Tickets"}
               </button>
             </div>
           </div>
@@ -251,139 +288,145 @@ const EventDetail = () => {
       </div>
 
       {/* Seat Map Modal */}
-      {showSeatMap && seatMapData && (
+      {showSeatMap && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-auto">
-          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-auto">
-            <div className="flex justify-between items-center border-b p-4 sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-bold">Select Your Seats</h2>
-              <button 
-                onClick={() => {
-                  setShowSeatMap(false);
-                  setSelectedSeats([]);
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <MdClose size={24} />
-              </button>
+          {loadingSeatMap ? (
+            <div className="bg-white rounded-lg p-8">
+              <LoadingAnimation text="Loading seat map..." />
             </div>
-            
-            <div className="p-4">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">{event.eventName}</h3>
-                <p className="text-gray-600">
-                  <MdLocationOn className="inline mr-1" />
-                  {seatMapData.name}
-                </p>
-              </div>
-              
-              {/* Price Categories Section - Ordered by price */}
-              <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                {seatMapData.seatMap.categories
-                  .map(category => {
-                    const ticketType = event.ticketTypes?.find(t => t.type === category.name);
-                    return {
-                      ...category,
-                      price: ticketType?.price || 0
-                    };
-                  })
-                  .sort((a, b) => b.price - a.price)
-                  .map((category, index) => (
-                    <div key={index} className="border p-4 rounded-lg">
-                      <div className="flex items-center mb-2">
-                        <div 
-                          className="w-5 h-5 rounded-full mr-3" 
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <span className="font-bold">{category.name}</span>
-                      </div>
-                      <div className="text-xl font-bold text-blue-600">
-                        USD {category.price.toLocaleString()}
-                      </div>
-                      {category.description && (
-                        <p className="text-sm text-gray-600 mt-2">{category.description}</p>
-                      )}
-                    </div>
-                  ))}
-              </div>
-              
-              {/* Seat Map Display */}
-              <div className="mb-8 text-center">
-                <div className="text-xl font-bold bg-gray-100 py-2 mb-4 rounded">STAGE</div>
-                <div 
-                  ref={handleSvgContainerRef}
-                  className="seat-map-container mx-auto"
-                  style={{ maxWidth: '800px' }}
-                  dangerouslySetInnerHTML={{ __html: seatMapData.svgTemplate }}
-                />
-              </div>
-              
-              {/* Selected Seats */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-6 border">
-                <h4 className="font-semibold text-lg mb-4">Selected Seats ({selectedSeats.length})</h4>
-                {selectedSeats.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {selectedSeats.map((seatId, index) => {
-                      const rowLetter = seatId.charAt(0);
-                      const seatNumber = seatId.substring(1);
-                      const category = seatMapData.seatMap.categories.find(cat => {
-                        const startRow = 'A'.charCodeAt(0);
-                        const endRow = String.fromCharCode(startRow + (cat.rowCount || 0) - 1);
-                        return rowLetter >= 'A' && rowLetter <= endRow;
-                      });
-                      
-                      const ticketType = category ? event.ticketTypes?.find(t => t.type === category.name) : null;
-                      const price = ticketType?.price || 0;
-                      
-                      return (
-                        <div 
-                          key={index} 
-                          className="border p-3 rounded-lg flex justify-between items-center"
-                          style={{ borderLeft: `4px solid ${category?.color || '#ccc'}` }}
-                        >
-                          <div className="flex items-center">
-                            <div className="font-bold mr-2">{rowLetter}-{seatNumber}</div>
-                            <div className="text-sm text-gray-600">{category?.name || 'General'}</div>
-                          </div>
-                          <div className="font-bold text-blue-600">
-                            USD {price.toLocaleString()}
-                          </div>
-                          <button 
-                            onClick={() => handleSeatSelection(seatId)}
-                            className="ml-2 text-red-500 hover:text-red-700"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-4">No seats selected yet</p>
-                )}
-              </div>
-              
-              {/* Total and Checkout */}
-              <div className="flex justify-between items-center border-t pt-4">
-                <div className="text-xl">
-                  <span className="font-semibold">Total:</span>
-                  <span className="ml-3 text-2xl font-bold text-blue-600">
-                    USD {calculateTotal().toLocaleString()}
-                  </span>
-                </div>
-                <button
-                  onClick={handleProceedToCheckout}
-                  disabled={selectedSeats.length === 0}
-                  className={`px-6 py-3 rounded-md font-semibold text-lg ${
-                    selectedSeats.length === 0 
-                      ? 'bg-gray-300 cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
+          ) : seatMapData ? (
+            <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-auto">
+              <div className="flex justify-between items-center border-b p-4 sticky top-0 bg-white z-10">
+                <h2 className="text-xl font-bold">Select Your Seats</h2>
+                <button 
+                  onClick={() => {
+                    setShowSeatMap(false);
+                    setSelectedSeats([]);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
                 >
-                  Proceed to Checkout
+                  <MdClose size={24} />
                 </button>
               </div>
+              
+              <div className="p-4">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">{event.eventName}</h3>
+                  <p className="text-gray-600">
+                    <MdLocationOn className="inline mr-1" />
+                    {seatMapData.name}
+                  </p>
+                </div>
+                
+                <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {seatMapData.seatMap.categories
+                    .map(category => {
+                      const ticketType = event.ticketTypes?.find(t => t.type === category.name);
+                      return {
+                        ...category,
+                        price: ticketType?.price || 0
+                      };
+                    })
+                    .sort((a, b) => b.price - a.price)
+                    .map((category, index) => (
+                      <div key={index} className="border p-4 rounded-lg">
+                        <div className="flex items-center mb-2">
+                          <div 
+                            className="w-5 h-5 rounded-full mr-3" 
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="font-bold">{category.name}</span>
+                        </div>
+                        <div className="text-xl font-bold text-blue-600">
+                          USD {category.price.toLocaleString()}
+                        </div>
+                        {category.description && (
+                          <p className="text-sm text-gray-600 mt-2">{category.description}</p>
+                        )}
+                      </div>
+                    ))}
+                </div>
+                
+                <div className="mb-8 text-center">
+                  <div className="text-xl font-bold bg-gray-100 py-2 mb-4 rounded">STAGE</div>
+                  <div 
+                    ref={handleSvgContainerRef}
+                    className="seat-map-container mx-auto"
+                    style={{ maxWidth: '800px' }}
+                    dangerouslySetInnerHTML={{ __html: seatMapData.svgTemplate }}
+                  />
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg mb-6 border">
+                  <h4 className="font-semibold text-lg mb-4">Selected Seats ({selectedSeats.length})</h4>
+                  {selectedSeats.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {selectedSeats.map((seatId, index) => {
+                        const rowLetter = seatId.charAt(0);
+                        const seatNumber = seatId.substring(1);
+                        const category = seatMapData.seatMap.categories.find(cat => {
+                          const startRow = 'A'.charCodeAt(0);
+                          const endRow = String.fromCharCode(startRow + (cat.rowCount || 0) - 1);
+                          return rowLetter >= 'A' && rowLetter <= endRow;
+                        });
+                        
+                        const ticketType = category ? event.ticketTypes?.find(t => t.type === category.name) : null;
+                        const price = ticketType?.price || 0;
+                        
+                        return (
+                          <div 
+                            key={index} 
+                            className="border p-3 rounded-lg flex justify-between items-center"
+                            style={{ borderLeft: `4px solid ${category?.color || '#ccc'}` }}
+                          >
+                            <div className="flex items-center">
+                              <div className="font-bold mr-2">{rowLetter}-{seatNumber}</div>
+                              <div className="text-sm text-gray-600">{category?.name || 'General'}</div>
+                            </div>
+                            <div className="font-bold text-blue-600">
+                              USD {price.toLocaleString()}
+                            </div>
+                            <button 
+                              onClick={() => handleSeatSelection(seatId)}
+                              className="ml-2 text-red-500 hover:text-red-700"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">No seats selected yet</p>
+                  )}
+                </div>
+                
+                <div className="flex justify-between items-center border-t pt-4">
+                  <div className="text-xl">
+                    <span className="font-semibold">Total:</span>
+                    <span className="ml-3 text-2xl font-bold text-blue-600">
+                      USD {calculateTotal().toLocaleString()}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleProceedToCheckout}
+                    disabled={selectedSeats.length === 0}
+                    className={`px-6 py-3 rounded-md font-semibold text-lg ${
+                      selectedSeats.length === 0 
+                        ? 'bg-gray-300 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    Proceed to Checkout
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-lg p-8 text-center">
+              <p className="text-red-500">Failed to load seat map</p>
+            </div>
+          )}
         </div>
       )}
 
