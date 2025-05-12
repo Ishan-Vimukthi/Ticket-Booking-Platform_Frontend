@@ -17,7 +17,7 @@ const D_Navbar = () => {
           <MenuItems className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-md">
             <MenuItem>
             <>
-              <div className="pt-3 px-3 text-gray-600 ">Admin</div>
+              <div className="pt-3 px-3 text-gray-600 ">{admin.name}</div>
               <div className="px-3 text-gray-600">admin@example.com</div>
             </> 
             </MenuItem>
@@ -25,7 +25,7 @@ const D_Navbar = () => {
               <NavLink to="/edit-profile" className="block p-3 hover:bg-gray-200 border-b border-gray-300">Edit Profile</NavLink>
             </MenuItem>
             <MenuItem>
-              <button className="w-full text-left p-3 hover:bg-gray-200">Sign Out</button>
+              <button onClick={logout} className="w-full text-left p-3 hover:bg-gray-200">Sign Out</button>
             </MenuItem>
           </MenuItems>
         </Menu>
