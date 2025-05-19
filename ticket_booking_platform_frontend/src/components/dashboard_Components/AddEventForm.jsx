@@ -20,6 +20,7 @@ const AddEventForm = ({ onClose, onEventCreated = () => {} }) => {
     ],
     image: null,
     status: "Upcoming",
+    cancellationPossible: false,
   });
 
   const [errors, setErrors] = useState({
@@ -96,10 +97,10 @@ const AddEventForm = ({ onClose, onEventCreated = () => {} }) => {
   }, [API_BASE]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
 
     // If venue is changed, update totalTickets
@@ -190,6 +191,7 @@ const AddEventForm = ({ onClose, onEventCreated = () => {} }) => {
       formDataToSend.append("venue", formData.venue);
       formDataToSend.append("totalTickets", formData.totalTickets);
       formDataToSend.append("image", formData.image); // Required by server
+      formDataToSend.append("cancellationPossible", formData.cancellationPossible);
 
       // Only append optional fields if they exist
       if (formData.eventDescription) {
@@ -599,6 +601,21 @@ const AddEventForm = ({ onClose, onEventCreated = () => {} }) => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Ticket Cancellation Checkbox */}
+          <div className="mt-0 ml-106 flex items-center">
+            <input
+              type="checkbox"
+              id="cancellationPossible"
+              name="cancellationPossible"
+              checked={formData.cancellationPossible}
+              onChange={handleChange}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="cancellationPossible" className="ml-2 block text-sm text-gray-700">
+              Ticket cancellation is possible
+            </label>
           </div>
 
           {/* Submit Button */}
