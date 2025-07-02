@@ -15,8 +15,10 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CartSlider from "./components/ecom_Components/cart/CartSlider";
 import { CartProvider } from "./contexts/CartContext";
-import CheckoutPage from "./pages/Ecom_Pages/CheckoutPage";
+import CheckoutPage from "./pages/Ecom_Pages/CheckoutPage"; // This is for the e-commerce shop
 import EventDetail from "./components/EventDetail";
+import EventCheckout from "./pages/EventCheckout"; // New Event Checkout Page
+import BookingConfirmation from "./pages/BookingConfirmation"; // New Booking Confirmation Page
 
 const App = () => {
   return (
@@ -31,7 +33,9 @@ const App = () => {
           <Route path="/contactus" element={<ContactUs />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/product/:id" element={<ProductPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} /> {/* E-commerce checkout */}
+          <Route path="/checkout/event" element={<EventCheckout />} /> {/* Event ticket checkout */}
+          <Route path="/booking-confirmation" element={<BookingConfirmation />} /> {/* Booking Confirmation page */}
 
           {/* Protected Admin Routes */}
           <Route path="/admin" element={<AdminDashboard />} />

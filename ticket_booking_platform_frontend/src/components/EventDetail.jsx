@@ -1,5 +1,5 @@
   import React, { useState, useEffect, useCallback } from "react";
-  import { useParams } from "react-router-dom";
+  import { useParams, useNavigate } from "react-router-dom";
   import { MdDateRange, MdLocationOn, MdHome, MdClose } from "react-icons/md";
   import NavBar from "../components/NavBar";
   import Footer from "../components/Footer";
@@ -7,6 +7,7 @@
 
   const EventDetail = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [event, setEvent] = useState(null);
     const [venues, setVenues] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -136,8 +137,31 @@
     }, [selectedSeats, getSeatPrice]);
 
     const handleProceedToCheckout = () => {
-      console.log("Proceeding to checkout with seats:", selectedSeats);
-      alert(`Proceeding to checkout with ${selectedSeats.length} seats. Total: USD ${calculateTotal().toLocaleString()}`);
+      if (!event || selectedSeats.length === 0) {
+        // Basic validation, though button should be disabled anyway
+        alert("Please select seats before proceeding.");
+        return;
+      }
+      // Pass all necessary data to the checkout page
+      // Ensure event object has all required details including seatMapData for price calculation on checkout if needed
+      const eventDetailsForCheckout = {
+        _id: event._id,
+        eventName: event.eventName,
+        eventDate: event.eventDate,
+        eventTime: event.eventTime,
+        image: event.image,
+        venueName: getVenueName(event.venue), // Pass venue name
+        ticketTypes: event.ticketTypes, // Pass ticket types for reference
+        seatMapData: seatMapData, // Pass seatMapData which includes categories and SVG
+      };
+
+      navigate('/checkout/event', { 
+        state: { 
+          eventDetails: eventDetailsForCheckout, 
+          selectedSeats: selectedSeats, 
+          totalPrice: calculateTotal() 
+        } 
+      });
     };
 
     const getVenueName = (venueId) => {
@@ -164,16 +188,32 @@
             const seatId = group.getAttribute('data-seat');
             const rectElement = group.querySelector('rect'); // Find the rect within the group
 
-            if (seatId && rectElement) { 
+            if (seatId && rectElement) {
               // Store original styles from the rect
               seatOriginalStylesRef.current[seatId] = {
-                fill: rectElement.getAttribute('fill') || 'blue', 
+                fill: rectElement.getAttribute('fill') || 'blue',
                 stroke: rectElement.getAttribute('stroke') || 'black',
               };
               // Apply interactive styles to the rect
               rectElement.style.cursor = 'pointer';
+              
+              // Remove problematic onmouseover/onmouseout attributes from rect
+              if (rectElement.hasAttribute('onmouseover')) {
+                rectElement.removeAttribute('onmouseover');
+              }
+              if (rectElement.hasAttribute('onmouseout')) {
+                rectElement.removeAttribute('onmouseout');
+              }
+              // Also check the parent group element for these attributes
+              if (group.hasAttribute('onmouseover')) {
+                group.removeAttribute('onmouseover');
+              }
+              if (group.hasAttribute('onmouseout')) {
+                group.removeAttribute('onmouseout');
+              }
+
               // Add a class to the group for easier targeting if needed.
-              group.classList.add('interactive-seat-group'); 
+              group.classList.add('interactive-seat-group');
             }
           });
           setProcessedSvgString(new XMLSerializer().serializeToString(svgElement));
