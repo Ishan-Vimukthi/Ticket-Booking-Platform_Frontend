@@ -1,3 +1,4 @@
+node_modules
 node_modules/.bin/loose-envify
 node_modules/.bin/loose-envify.cmd
 node_modules/.bin/loose-envify.ps1
