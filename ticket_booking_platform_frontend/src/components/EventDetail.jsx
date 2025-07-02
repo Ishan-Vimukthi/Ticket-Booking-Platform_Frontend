@@ -530,6 +530,7 @@ const EventDetail = () => {
                             />
                             <span className="text-sm font-medium text-[#1a2332]">
                               {category.price.toLocaleString()} USD
+                              {category.name ? ` (${category.name})` : ''}
                             </span>
                           </div>
                         ))}
