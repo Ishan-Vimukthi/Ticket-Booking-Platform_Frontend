@@ -1,33 +1,123 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
-import SizeSelector from "../../components/ecom_Components/porduct_components/SizeSelector";
 import ShopNav from "../../components/ecom_Components/navigation/ShopNav";
 import CartSlider from "../../components/ecom_Components/cart/CartSlider";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Footer from "../../components/Footer";
+import { getProductImage } from '../../utils/images';
+
+// Import or define your products array (should match the one in Shop.js)
+const products = [
+  {
+    id: 1,
+    name: "Electronica Tee",
+    price: 18.99,
+    image: "tshirt1.jpg",
+    category: "men",
+    rating: 4.5,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Premium quality t-shirt with unique electronic design"
+  },
+  {
+    id: 2,
+    name: "Classic Tee - White",
+    price: 14.99,
+    image: "tshirt2.jpg",
+    category: "women",
+    rating: 4.2,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Classic white t-shirt for everyday wear"
+  },
+  {
+    id: 3,
+    name: "Moss Green - Earth",
+    price: 16.50,
+    image: "tshirt3.png",
+    category: "unisex",
+    rating: 4.7,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Eco-friendly t-shirt in soothing moss green"
+  },
+  {
+    id: 4,
+    name: "Transmission Tee",
+    price: 19.99,
+    image: "tshirt4.png",
+    category: "unisex",
+    rating: 4.8,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Graphic t-shirt with transmission-inspired design"
+  },
+  {
+    id: 5,
+    name: "Coast Tee",
+    price: 15.75,
+    image: "tshirt5.jpg",
+    category: "unisex",
+    rating: 4.3,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Relaxed fit t-shirt perfect for coastal vibes"
+  },
+  {
+    id: 6,
+    name: "Culture Tree",
+    price: 17.25,
+    image: "tshirt6.jpg",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"],
+    description: "Cultural inspired design on comfortable fabric"
+  },
+  {
+    id: 7,
+    name: "Down Beat tee",
+    price: 17.00,
+    image: "tshirt7.jpg",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 8,
+    name: "living in stereo",
+    price: 20.00,
+    image: "tshirt8.png",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 9,
+    name: "Studio tee",
+    price: 15.00,
+    image: "tshirt9.png",
+    category: "unisex",
+    rating: 4.6,
+    sizes: ["S", "M", "L", "XL"]
+  }
+];
 
 const ProductPage = () => {
   const { id } = useParams();
-  const { addToCart, cartItems, setCartItems } = useCart(); // Added setCartItems from useCart
+  const { addToCart, cartItems, setCartItems } = useCart();
   const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const mockProduct = {
-      id: 1,
-      name: "Acid Wash Jagger",
-      price: 5100,
-      sizes: ["S", "M", "L", "XL"],
-      description: "STEP UP YOUR COMFORT GAME...",
-      inStock: true,
-      image: "/images/tshirt1.jpg",
-    };
-    setProduct(mockProduct);
-  }, [id]);
+    // Find the product with matching ID
+    const foundProduct = products.find(p => p.id === parseInt(id));
+    
+    if (foundProduct) {
+      setProduct(foundProduct);
+    } else {
+      // Handle case where product isn't found
+      navigate('/shop'); // Redirect to shop page or show error
+    }
+  }, [id, navigate]);
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -38,7 +128,7 @@ const ProductPage = () => {
       });
       return;
     }
-    addToCart({ ...product, selectedSize, quantity });
+    addToCart({ ...product, size: selectedSize, quantity });
     toast.success('Added to cart!', {
       position: "top-right",
       autoClose: 2000,
@@ -56,13 +146,11 @@ const ProductPage = () => {
       return;
     }
     
-    // Check if product with same ID and size already exists in cart
     const existingItemIndex = cartItems.findIndex(
       item => item.id === product.id && item.size === selectedSize
     );
     
     if (existingItemIndex >= 0) {
-      // If item exists, update its quantity to the current selected quantity
       const updatedItems = [...cartItems];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
@@ -70,8 +158,7 @@ const ProductPage = () => {
       };
       setCartItems(updatedItems);
     } else {
-      // If item doesn't exist, add it with the selected quantity
-      addToCart({ ...product, selectedSize, quantity });
+      addToCart({ ...product, size: selectedSize, quantity });
     }
     
     navigate('/checkout');
@@ -86,26 +173,19 @@ const ProductPage = () => {
       <ToastContainer />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left Column: Image */}
           <div className="bg-gray-100 rounded-lg overflow-hidden">
             <img
-              src={product.image}
+              src={getProductImage(product.image)}
               alt={product.name}
               className="w-full h-full object-cover"
             />
           </div>
 
-          {/* Right Column: Details */}
           <div className="space-y-6">
             <h1 className="text-3xl font-bold">{product.name}</h1>
-            <p className="text-2xl">Rs {product.price.toLocaleString()}</p>
-            <p className="text-gray-600">
-              or a payment of Rs {(product.price / 3).toLocaleString()} with <br />
-              <span className="font-semibold">return</span> or <span className="font-semibold">1000</span>
-            </p>
+            <p className="text-2xl">${product.price.toFixed(2)}</p>
 
             <div className="border-t border-b border-gray-200 py-4">
-              {/* Size Selector */}
               <div className="mb-4">
                 <label className="block text-gray-700 mb-2">Size</label>
                 <div className="flex flex-wrap gap-2">
@@ -125,7 +205,6 @@ const ProductPage = () => {
                 </div>
               </div>
 
-              {/* Quantity */}
               <div className="flex items-center space-x-4 mt-4">
                 <span className="font-medium">Quantity:</span>
                 <div className="flex border border-gray-300 rounded">
@@ -145,7 +224,6 @@ const ProductPage = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="space-y-3 mt-6">
                 <button
                   onClick={handleAddToCart}
@@ -170,8 +248,7 @@ const ProductPage = () => {
             <div className="text-sm text-gray-600 space-y-2">
               <p>Standard shipping (Estimated 3-5 days)</p>
               <p>Payment is 100% secure</p>
-              <p>30 days to change your mind!</p>
-              <p>Made in Sri Lanka</p>
+              <p>14 days to change your mind!</p>
             </div>
           </div>
         </div>
