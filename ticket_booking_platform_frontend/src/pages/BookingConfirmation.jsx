@@ -49,7 +49,7 @@ const BookingConfirmation = () => {
           <CheckCircleIcon className="h-20 w-20 text-green-500 mx-auto mb-6" />
           <h1 className="text-3xl font-bold text-gray-800 mb-4">Booking Confirmed!</h1>
           <p className="text-gray-600 mb-8">
-            Thank you for your purchase. Your tickets are booked and a confirmation email will be sent shortly (feature to be implemented).
+            Thank you for your purchase. Your tickets are booked and a confirmation email will be sent shortly .
           </p>
 
           <div className="text-left space-y-4 bg-gray-50 p-6 rounded-md border">
