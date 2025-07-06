@@ -115,10 +115,7 @@ const ManageReports = () => {
                   <h3 className="text-lg font-semibold text-green-800">Total Tickets Sold</h3>
                   <p className="text-2xl font-bold text-green-600">{report.totalTicketsSold}</p>
                 </div>
-                <div className="bg-indigo-50 p-4 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold text-indigo-800">Unique Attendees</h3>
-                  <p className="text-2xl font-bold text-indigo-600">{report.numberOfUniqueAttendees}</p>
-                </div>
+              
               </div>
 
               <div>
