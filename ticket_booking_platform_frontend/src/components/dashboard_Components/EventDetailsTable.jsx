@@ -1,37 +1,29 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const EventDetailsTable = () => {
-  // Sample event data (You can replace this with dynamic data)
-  const events = [
-    {
-      name: "Music Festival 2024",
-      ticketsSold: 500,
-      date: "2024-06-15",
-      place: "Los Angeles, CA",
-      revenue: "$25,000",
-    },
-    {
-      name: "Tech Conference",
-      ticketsSold: 300,
-      date: "2024-07-10",
-      place: "San Francisco, CA",
-      revenue: "$15,000",
-    },
-    {
-      name: "Art Exhibition",
-      ticketsSold: 200,
-      date: "2024-08-05",
-      place: "New York, NY",
-      revenue: "$10,000",
-    },
-    {
-      name: "Comedy Night",
-      ticketsSold: 150,
-      date: "2024-09-12",
-      place: "Chicago, IL",
-      revenue: "$7,500",
-    },
-  ];
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    axios.get("/api/events") // Assuming your backend API is configured to be accessible via /api
+      .then(response => {
+        const fetchedEvents = response.data.data || [];
+        // Format data as needed for the table
+        const formattedEvents = fetchedEvents.map(event => ({
+          _id: event._id, // Carry over the _id for the key prop
+          name: event.eventName,
+          ticketsSold: event.eventTicketsSold !== undefined ? event.eventTicketsSold : "N/A",
+          date: new Date(event.eventDate).toLocaleDateString(),
+          place: event.venue && event.venue.name ? event.venue.name : (event.venue || "N/A"), // Display Venue Name or ID or N/A
+          revenue: event.eventRevenue !== undefined ? `$${Number(event.eventRevenue).toFixed(2)}` : "N/A",
+        }));
+        setEvents(formattedEvents);
+      })
+      .catch(error => {
+        console.error("Error fetching event details:", error);
+        setEvents([]); // Set to empty array on error
+      });
+  }, []);
 
   return (
     <div className="overflow-x-auto p-5">
@@ -43,25 +35,33 @@ const EventDetailsTable = () => {
             <th className="py-3 px-4 border-b">Event Name</th>
             <th className="py-3 px-4 border-b">Tickets Sold</th>
             <th className="py-3 px-4 border-b">Date</th>
-            <th className="py-3 px-4 border-b">Place</th>
+            <th className="py-3 px-4 border-b">Venue</th>
             <th className="py-3 px-4 border-b">Revenue</th>
           </tr>
         </thead>
 
         {/* Table Body */}
         <tbody>
-          {events.map((event, index) => (
-            <tr
-              key={index}
-              className="border-b hover:bg-gray-50 transition duration-200"
-            >
-              <td className="py-3 px-4">{event.name}</td>
-              <td className="py-3 px-4">{event.ticketsSold}</td>
-              <td className="py-3 px-4">{event.date}</td>
-              <td className="py-3 px-4">{event.place}</td>
-              <td className="py-3 px-4">{event.revenue}</td>
+          {events.length > 0 ? (
+            events.map((event) => (
+              <tr
+                key={event._id} // Use event._id as the key
+                className="border-b hover:bg-gray-50 transition duration-200"
+              >
+                <td className="py-3 px-4">{event.name}</td>
+                <td className="py-3 px-4">{event.ticketsSold}</td>
+                <td className="py-3 px-4">{event.date}</td>
+                <td className="py-3 px-4">{event.place}</td>
+                <td className="py-3 px-4">{event.revenue}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5" className="py-3 px-4 text-center text-gray-500">
+                No event data available.
+              </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>
