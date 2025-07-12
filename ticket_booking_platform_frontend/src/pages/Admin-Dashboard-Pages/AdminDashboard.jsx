@@ -35,7 +35,7 @@ const AdminDashboard = () => {
       });
 
     // Fetch total users
-    axios.get("/api/admins/users/count")
+    axios.get("/api/events/bookings/users/count")
       .then(response => {
         const totalUsers = response.data.data?.totalUsers || 0;
         setCardData(prevData => prevData.map(card =>

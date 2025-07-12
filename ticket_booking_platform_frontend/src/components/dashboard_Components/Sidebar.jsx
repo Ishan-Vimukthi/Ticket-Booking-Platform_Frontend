@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart, Calendar, Map, FileText, Menu, X, Edit } from "lucide-react";
+import { BarChart, Calendar, Map, FileText, Menu, X, Edit, Users } from "lucide-react";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -12,6 +12,7 @@ const Sidebar = () => {
     { name: "Seat Mapping Tool", path: "/seat-map", icon: <Map size={20} /> },
     { name: "Edit Profile", path: "/edit-profile", icon: <Edit size={20} /> },
     { name: "Manage Reports", path: "/reporting", icon: <FileText size={20} /> },
+    { name: "Manage Admins", path: "/manage-admins", icon: <Users size={20} /> },
   ];
 
   return (

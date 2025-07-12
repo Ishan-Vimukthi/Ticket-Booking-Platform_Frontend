@@ -11,6 +11,7 @@ import ManageEvents from "./pages/Admin-Dashboard-Pages/ManageEvents";
 import ManageReports from "./pages/Admin-Dashboard-Pages/ManageReports";
 import SeatMapping from "./pages/Admin-Dashboard-Pages/SeatMapping";
 import EditProfile from "./pages/Admin-Dashboard-Pages/EditProfile";
+import ManageAdmins from "./pages/Admin-Dashboard-Pages/ManageAdmins";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CartSlider from "./components/ecom_Components/cart/CartSlider";
@@ -78,6 +79,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <EditProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manage-admins"
+            element={
+              <ProtectedRoute>
+                <ManageAdmins />
               </ProtectedRoute>
             }
           />

@@ -37,15 +37,8 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Buttons */}
-          <div className="hidden md:flex space-x-4">
-            <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white font-bold transition">
-              Register
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold transition">
-              Sign In
-            </button>
-          </div>
+          
+    
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
