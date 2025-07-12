@@ -19,6 +19,8 @@ import CheckoutPage from "./pages/Ecom_Pages/CheckoutPage"; // This is for the e
 import EventDetail from "./components/EventDetail";
 import EventCheckout from "./pages/EventCheckout"; // New Event Checkout Page
 import BookingConfirmation from "./pages/BookingConfirmation"; // New Booking Confirmation Page
+import AdminLogin from "./pages/AdminLogin";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (
@@ -37,12 +39,48 @@ const App = () => {
           <Route path="/checkout/event" element={<EventCheckout />} /> {/* Event ticket checkout */}
           <Route path="/booking-confirmation" element={<BookingConfirmation />} /> {/* Booking Confirmation page */}
 
-          {/* Protected Admin Routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/manage-event" element={<ManageEvents />} />
-          <Route path="/reporting" element={<ManageReports />} />
-          <Route path="/seat-map" element={<SeatMapping />} />
-          <Route path="/edit-profile" element={<EditProfile />} />
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manage-event"
+            element={
+              <ProtectedRoute>
+                <ManageEvents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reporting"
+            element={
+              <ProtectedRoute>
+                <ManageReports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/seat-map"
+            element={
+              <ProtectedRoute>
+                <SeatMapping />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-profile"
+            element={
+              <ProtectedRoute>
+                <EditProfile />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Redirect any unmatched routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
