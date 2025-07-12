@@ -9,7 +9,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 const VITE_STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51RflZsH8Y4NurIedtVJjjow0vcGgcSjiakk7ukq6V7ylUwk3aKIUiySY3h9COv0IBi3ISnoQSw1kF0pllVuxzTUg00YRySt0o2"; 
 const stripePromise = loadStripe(VITE_STRIPE_PUBLISHABLE_KEY);
 
-const CheckoutForm = ({ eventDetails, selectedSeats, totalPrice }) => {
+const CheckoutForm = ({ eventDetails, selectedSeats, totalPrice, detailedSelectedSeats }) => {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
@@ -70,7 +70,10 @@ const CheckoutForm = ({ eventDetails, selectedSeats, totalPrice }) => {
         },
         body: JSON.stringify({
           eventId: eventDetails._id,
-          selectedSeats: selectedSeats,
+          selectedSeats: detailedSelectedSeats.map(seat => ({
+            seatId: seat.id,
+            ticketType: seat.category
+          })),
           ticketHolderDetails: { name, email, phone },
           paymentMethodId: paymentMethod.id,
           totalPrice: totalPrice,
@@ -317,6 +320,7 @@ const EventCheckout = () => {
                 eventDetails={eventDetails}
                 selectedSeats={selectedSeats}
                 totalPrice={totalPrice}
+                detailedSelectedSeats={detailedSelectedSeats}
               />
             </Elements>
           </div>
