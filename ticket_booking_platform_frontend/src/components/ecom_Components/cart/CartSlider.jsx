@@ -166,14 +166,6 @@ const CartSlider = () => {
                 </button>
               )}
             </div>
-            
-            <Link 
-              to="/cart" 
-              className="block w-full mt-2 text-center underline text-sm text-gray-500 hover:text-black"
-              onClick={closeCart}
-            >
-              View cart
-            </Link>
           </div>
         </div>
       </div>

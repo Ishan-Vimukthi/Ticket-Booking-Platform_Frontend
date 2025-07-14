@@ -324,7 +324,7 @@ const PaymentForm = ({ customerInfo, cartItems, cartTotal, shipping, tax, onVali
 
 // Main Checkout Component
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, closeCart } = useCart();
+  const { cartItems, cartTotal, closeCart, updateQuantity, removeFromCart } = useCart();
   const [stripePromise, setStripePromise] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -620,21 +620,70 @@ const CheckoutPage = () => {
             {/* Cart Items */}
             <div className="space-y-4 mb-6">
               {cartItems.map((item) => (
-                <div key={`${item.id}-${item.size}`} className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
-                    <img
-                      src={getProductImage(item.image)}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.name}</h4>
-                    <p className="text-sm text-gray-600">Size: {item.size}</p>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                <div key={`${item.id}-${item.size}`} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={getProductImage(item.image)}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 truncate">{item.name}</h4>
+                      <p className="text-sm text-gray-600">Size: {item.size}</p>
+                      <p className="text-sm font-medium">${item.price.toFixed(2)} each</p>
+                      
+                      {/* Quantity Controls */}
+                      <div className="flex items-center space-x-3 mt-2">
+                        <span className="text-sm text-gray-600">Qty:</span>
+                        <div className="flex items-center border border-gray-300 rounded-md">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.size, item.quantity - 1)}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600"
+                            disabled={item.quantity <= 1}
+                          >
+                            <span className="text-lg leading-none">−</span>
+                          </button>
+                          <span className="w-12 text-center text-sm font-medium py-1">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.size, item.quantity + 1)}
+                            className={`w-8 h-8 flex items-center justify-center transition-colors ${
+                              item.stockQuantity && item.quantity >= item.stockQuantity
+                                ? 'text-gray-300 cursor-not-allowed'
+                                : 'hover:bg-gray-100 text-gray-600'
+                            }`}
+                            disabled={item.stockQuantity && item.quantity >= item.stockQuantity}
+                          >
+                            <span className="text-lg leading-none">+</span>
+                          </button>
+                        </div>
+                        
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => removeFromCart(item.id, item.size)}
+                          className="text-sm text-red-600 hover:text-red-800 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      
+                      {/* Stock warning */}
+                      {item.stockQuantity && item.quantity >= item.stockQuantity && (
+                        <p className="text-xs text-orange-600 mt-1">
+                          Max quantity reached ({item.stockQuantity} available)
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Item Total */}
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-semibold text-gray-900">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

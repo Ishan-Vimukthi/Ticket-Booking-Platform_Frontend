@@ -82,7 +82,7 @@ const ProductCard = ({ product }) => {
               ${product.price.toFixed(2)}
             </span>
             
-            {/* Compact Stock Indicator */}
+            {/* Stock Indicator */}
             <div className="flex items-center space-x-1">
               <div className={`w-2 h-2 rounded-full ${
                 product.quantity > 10 ? 'bg-green-500' 
@@ -91,7 +91,12 @@ const ProductCard = ({ product }) => {
                 : 'bg-red-500'
               }`}></div>
               <span className="text-xs text-gray-500">
-                {product.quantity > 0 ? `${product.quantity}` : '0'}
+                {product.quantity > 0 
+                  ? product.quantity <= 5 
+                    ? `Only ${product.quantity} left`
+                    : `${product.quantity} left`
+                  : 'Out of stock'
+                }
               </span>
             </div>
           </div>
