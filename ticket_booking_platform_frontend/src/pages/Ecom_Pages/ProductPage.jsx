@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import ShopNav from "../../components/ecom_Components/navigation/ShopNav";
 import CartSlider from "../../components/ecom_Components/cart/CartSlider";
+import SizeChart from "../../components/ecom_Components/SizeChart";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Footer from "../../components/Footer";
@@ -16,6 +17,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -244,7 +246,15 @@ const ProductPage = () => {
 
             {/* Size Selection */}
             <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-900">Size</label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-900">Size</label>
+                <button
+                  onClick={() => setIsSizeChartOpen(true)}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline font-medium transition-colors"
+                >
+                  Size Chart
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {product.sizes?.map((size) => (
                   <button
@@ -368,6 +378,12 @@ const ProductPage = () => {
       </div>
       
       <Footer />
+      
+      {/* Size Chart Modal */}
+      <SizeChart 
+        isOpen={isSizeChartOpen} 
+        onClose={() => setIsSizeChartOpen(false)} 
+      />
     </div>
   );
 };
