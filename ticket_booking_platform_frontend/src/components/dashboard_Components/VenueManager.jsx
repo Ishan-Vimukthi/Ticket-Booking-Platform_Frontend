@@ -8,8 +8,9 @@ const VenueManager = () => {
     description: "",
     layoutType: "auditorium",
     rows: 10,
-    cols: 10,
+    cols: 20,
     aisleAfterCol: 5,
+    aisleAfterCol2: 15,
     categories: [
       { name: "VVIP", color: "#FFC107", rowCount: 2 },
       { name: "VIP", color: "#2196F3", rowCount: 3 },
@@ -49,6 +50,7 @@ const VenueManager = () => {
         rows: formData.rows,
         cols: formData.cols,
         aisleAfterCol: formData.aisleAfterCol,
+        aisleAfterCol2: formData.aisleAfterCol2,
         categories: formData.categories,
         unavailableSeats: formData.unavailableSeats,
       });
@@ -134,6 +136,7 @@ const VenueManager = () => {
       rows: venue.seatMap.rows,
       cols: venue.seatMap.cols,
       aisleAfterCol: venue.seatMap.aisleAfterCol,
+      aisleAfterCol2: venue.seatMap.aisleAfterCol2,
       categories: venue.seatMap.categories,
       unavailableSeats: venue.seatMap.unavailableSeats,
     });
@@ -161,8 +164,9 @@ const VenueManager = () => {
       description: "",
       layoutType: "auditorium",
       rows: 10,
-      cols: 10,
+      cols: 20,
       aisleAfterCol: 5,
+      aisleAfterCol2: 15,
       categories: [
         { name: "VVIP", color: "#FFC107", rowCount: 2 },
         { name: "VIP", color: "#2196F3", rowCount: 3 },
@@ -302,6 +306,22 @@ const VenueManager = () => {
                     min="1"
                     max={formData.cols - 1}
                     value={formData.aisleAfterCol}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    disabled={isEditing}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Second Aisle After Column
+                  </label>
+                  <input
+                    type="number"
+                    name="aisleAfterCol2"
+                    min="1"
+                    max={formData.cols - 1}
+                    value={formData.aisleAfterCol2}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     disabled={isEditing}
