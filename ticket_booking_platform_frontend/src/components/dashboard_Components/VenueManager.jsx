@@ -11,9 +11,9 @@ const VenueManager = () => {
     cols: 10,
     aisleAfterCol: 5,
     categories: [
-      { name: "General", color: "#edf6f9", rowCount: 2 },
+      { name: "General", color: "#006d77", rowCount: 2 },
       { name: "VIP", color: "#83c5be", rowCount: 3 },
-      { name: "VVIP", color: "#006d77", rowCount: 5 },
+      { name: "VVIP", color: "#edf6f9", rowCount: 5 },
     ],
     unavailableSeats: [],
   });
