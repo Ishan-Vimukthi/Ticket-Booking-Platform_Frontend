@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Customer API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre { background: white; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Backend Customer API Test Tool</h1>
+        <p>This tool helps test and verify the backend customer endpoints are working correctly.</p>
+        
+        <div class="test-section">
+            <h3>1. Test Customer Analytics Endpoint</h3>
+            <button onclick="testAnalytics()">Test Analytics API</button>
+            <div id="analytics-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test Customer List Endpoint</h3>
+            <button onclick="testCustomerList()">Test Customer List API</button>
+            <div id="customer-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test with Authentication</h3>
+            <input type="text" id="token" placeholder="Enter ecom_token here" style="width: 300px; padding: 5px;">
+            <br><br>
+            <button onclick="testWithAuth()">Test with Token</button>
+            <div id="auth-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Expected Data Format</h3>
+            <p>The backend should return data in this format:</p>
+            <pre id="expected-format"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api/ecom';
+        
+        // Display expected format
+        document.getElementById('expected-format').textContent = JSON.stringify({
+            "status": "SUCCESS",
+            "data": [
+                {
+                    "id": "1",
+                    "email": "henry@example.com",
+                    "full_name": "henry ford",
+                    "phone": "+1234567890",
+                    "stats": {
+                        "totalOrders": 5,
+                        "totalSpent": 114.8,
+                        "firstOrderDate": "2024-01-15T00:00:00Z",
+                        "lastOrderDate": "2024-12-01T00:00:00Z"
+                    }
+                }
+            ]
+        }, null, 2);
+
+        async function testAnalytics() {
+            const resultDiv = document.getElementById('analytics-result');
+            resultDiv.innerHTML = '<p class="info">Testing analytics endpoint...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/customers/analytics`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Analytics endpoint working!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Analytics endpoint failed</p>
+                        <pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Cannot connect to backend</p>
+                    <pre>Error: ${error.message}</pre>
+                    <p>Make sure backend server is running on localhost:5000</p>
+                `;
+            }
+        }
+
+        async function testCustomerList() {
+            const resultDiv = document.getElementById('customer-result');
+            resultDiv.innerHTML = '<p class="info">Testing customer list endpoint...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/customers`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Customer list endpoint working!</p>
+                        <p>Found ${data.data?.length || 0} customers</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Customer list endpoint failed</p>
+                        <pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Cannot connect to backend</p>
+                    <pre>Error: ${error.message}</pre>
+                    <p>This is likely why the customer table is empty!</p>
+                `;
+            }
+        }
+
+        async function testWithAuth() {
+            const token = document.getElementById('token').value;
+            const resultDiv = document.getElementById('auth-result');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<p class="error">Please enter a token first</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p class="info">Testing with authentication...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/customers`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Authenticated request successful!</p>
+                        <p>Found ${data.data?.length || 0} customers</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Authentication failed</p>
+                        <pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Cannot connect to backend</p>
+                    <pre>Error: ${error.message}</pre>
+                `;
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            setTimeout(() => {
+                testAnalytics();
+                setTimeout(() => testCustomerList(), 1000);
+            }, 500);
+        };
+    </script>
+</body>
+</html>

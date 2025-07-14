@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Data Backend Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .response {
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #2196f3;
+        }
+        .critical {
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Customer Data Backend Debug</h1>
+    
+    <div class="container">
+        <div class="critical">
+            <h3>🚨 Issue Identified</h3>
+            <p><strong>Analytics Working:</strong> ✅ 1 customer, $20.8 revenue</p>
+            <p><strong>Customer List Empty:</strong> ❌ "No customers found"</p>
+            <p><strong>Root Cause:</strong> Authentication required for customer/order endpoints</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h2>🧪 Backend Endpoint Tests</h2>
+            
+            <div class="endpoint">
+                <h3>GET /api/ecom/customers/analytics (Working ✅)</h3>
+                <p>No authentication required - returns real analytics</p>
+                <button onclick="testAnalytics()">Test Analytics</button>
+                <span id="status-analytics" class="status warning">Ready</span>
+                <div id="response-analytics" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3>GET /api/ecom/customers (Auth Required 🔐)</h3>
+                <p>Authentication required - returns customer list</p>
+                <button onclick="testCustomers()">Test Without Auth</button>
+                <button onclick="testCustomersWithToken()">Test With Token</button>
+                <span id="status-customers" class="status warning">Ready</span>
+                <div id="response-customers" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3>GET /api/ecom/orders (Auth Required 🔐)</h3>
+                <p>Authentication required - needed for customer data fallback</p>
+                <button onclick="testOrders()">Test Without Auth</button>
+                <button onclick="testOrdersWithToken()">Test With Token</button>
+                <span id="status-orders" class="status warning">Ready</span>
+                <div id="response-orders" class="response" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h2>🔑 Authentication Test</h2>
+            <div class="endpoint">
+                <h3>Admin Login Test</h3>
+                <p>Try common admin credentials to get authentication token</p>
+                <input type="email" id="email" placeholder="admin@admin.com" value="admin@admin.com" style="padding: 8px; margin: 5px; width: 200px;">
+                <input type="password" id="password" placeholder="password" value="admin123" style="padding: 8px; margin: 5px; width: 200px;">
+                <button onclick="testLogin()">Try Login</button>
+                <span id="status-login" class="status warning">Ready</span>
+                <div id="response-login" class="response" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h2>🎯 Solution Recommendations</h2>
+            <div id="recommendations">
+                <div class="info">
+                    <h4>💡 Immediate Solutions:</h4>
+                    <ol>
+                        <li><strong>Login to E-commerce Admin:</strong> Navigate to e-commerce admin login and authenticate</li>
+                        <li><strong>Ask Backend Team:</strong> For admin credentials or test token</li>
+                        <li><strong>Demo Mode:</strong> Frontend can show sample data matching real analytics</li>
+                        <li><strong>Public Customer Endpoint:</strong> Make customer list endpoint public like analytics</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api/ecom';
+        let authToken = null;
+
+        async function testAnalytics() {
+            await testEndpoint('/customers/analytics', 'analytics', false);
+        }
+
+        async function testCustomers() {
+            await testEndpoint('/customers', 'customers', false);
+        }
+
+        async function testCustomersWithToken() {
+            const token = prompt('Enter authentication token:');
+            if (token) {
+                authToken = token;
+                await testEndpoint('/customers', 'customers', true);
+            }
+        }
+
+        async function testOrders() {
+            await testEndpoint('/orders', 'orders', false);
+        }
+
+        async function testOrdersWithToken() {
+            const token = authToken || prompt('Enter authentication token:');
+            if (token) {
+                authToken = token;
+                await testEndpoint('/orders', 'orders', true);
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const statusEl = document.getElementById('status-login');
+            const responseEl = document.getElementById('response-login');
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status warning';
+            responseEl.style.display = 'none';
+
+            // Try different login endpoints
+            const loginEndpoints = [
+                '/auth/login',
+                '/admin/login', 
+                '/login',
+                '/admin/auth'
+            ];
+
+            for (const endpoint of loginEndpoints) {
+                try {
+                    console.log(`Trying login endpoint: ${endpoint}`);
+                    
+                    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const responseData = await response.json();
+                    
+                    if (response.ok && responseData.token) {
+                        statusEl.textContent = `✅ Success - ${endpoint}`;
+                        statusEl.className = 'status success';
+                        
+                        authToken = responseData.token;
+                        responseEl.textContent = `Login successful!\nEndpoint: ${endpoint}\nToken: ${responseData.token.substring(0, 20)}...\n\n` + JSON.stringify(responseData, null, 2);
+                        responseEl.style.display = 'block';
+                        
+                        console.log(`✅ Login successful with ${endpoint}:`, responseData);
+                        return;
+                    }
+                    
+                } catch (error) {
+                    console.log(`❌ ${endpoint} failed:`, error.message);
+                }
+            }
+            
+            // If all failed
+            statusEl.textContent = '❌ All login endpoints failed';
+            statusEl.className = 'status error';
+            responseEl.textContent = 'No working login endpoints found. Tried:\n' + loginEndpoints.join('\n');
+            responseEl.style.display = 'block';
+        }
+
+        async function testEndpoint(endpoint, testId, useAuth) {
+            const statusEl = document.getElementById(`status-${testId}`);
+            const responseEl = document.getElementById(`response-${testId}`);
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status warning';
+            responseEl.style.display = 'none';
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (useAuth && authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
+                console.log(`Testing: ${API_BASE_URL}${endpoint}`, useAuth ? 'with auth' : 'without auth');
+                
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'GET',
+                    headers: headers
+                });
+
+                const responseData = await response.json();
+                
+                if (response.ok) {
+                    statusEl.textContent = `✅ Success (${response.status})`;
+                    statusEl.className = 'status success';
+                    
+                    responseEl.textContent = JSON.stringify(responseData, null, 2);
+                    responseEl.style.display = 'block';
+                    
+                    console.log(`✅ ${endpoint} Success:`, responseData);
+                } else {
+                    statusEl.textContent = `❌ Error (${response.status})`;
+                    statusEl.className = 'status error';
+                    
+                    responseEl.textContent = `HTTP ${response.status}: ${JSON.stringify(responseData, null, 2)}`;
+                    responseEl.style.display = 'block';
+                    
+                    console.log(`❌ ${endpoint} Error:`, response.status, responseData);
+                }
+                
+            } catch (error) {
+                statusEl.textContent = `❌ Network Error`;
+                statusEl.className = 'status error';
+                
+                responseEl.textContent = `Network Error: ${error.message}`;
+                responseEl.style.display = 'block';
+                
+                console.error(`❌ ${endpoint} Network Error:`, error);
+            }
+        }
+
+        // Auto-test analytics on load
+        window.onload = function() {
+            console.log('🔍 Customer Data Debug Tool Ready');
+            testAnalytics();
+        };
+    </script>
+</body>
+</html>

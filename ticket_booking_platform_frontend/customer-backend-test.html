@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Data Backend Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .response {
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Customer Data Backend Integration Test</h1>
+    
+    <div class="container">
+        <div class="info">
+            <h3>📋 Test Purpose</h3>
+            <p>This test verifies which customer data endpoints are available and what data format they return. 
+            The frontend Customer Management is designed to work with these endpoints and fall back gracefully.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h2>🔗 API Configuration</h2>
+            <div class="endpoint">
+                <strong>Base URL:</strong> <span id="api-base-url">http://localhost:3000/api/ecom</span><br>
+                <strong>Token:</strong> <span id="auth-token">None (testing without auth)</span><br>
+                <button onclick="updateConfig()">Update Config</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h2>👥 Customer Endpoints Test</h2>
+            
+            <div class="endpoint">
+                <h3>GET /api/ecom/customers</h3>
+                <p>Should return all customers with their order statistics</p>
+                <button onclick="testEndpoint('/customers', 'customers')">Test Endpoint</button>
+                <span id="status-customers" class="status warning">Not Tested</span>
+                <div id="response-customers" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3>GET /api/ecom/customers/analytics</h3>
+                <p>Should return customer analytics summary</p>
+                <button onclick="testEndpoint('/customers/analytics', 'analytics')">Test Endpoint</button>
+                <span id="status-analytics" class="status warning">Not Tested</span>
+                <div id="response-analytics" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3>GET /api/ecom/orders (Fallback)</h3>
+                <p>Orders endpoint for customer data aggregation</p>
+                <button onclick="testEndpoint('/orders', 'orders')">Test Endpoint</button>
+                <span id="status-orders" class="status warning">Not Tested</span>
+                <div id="response-orders" class="response" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h2>📊 Test Results Summary</h2>
+            <div id="test-summary">
+                <p>Run tests above to see results...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h2>🔧 Recommendations for Backend</h2>
+            <div id="recommendations">
+                <p>Test endpoints first to generate recommendations...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api/ecom';
+        let authToken = null;
+
+        function updateConfig() {
+            const newUrl = prompt('Enter API Base URL:', API_BASE_URL);
+            const newToken = prompt('Enter Auth Token (optional):', authToken || '');
+            
+            if (newUrl) {
+                document.getElementById('api-base-url').textContent = newUrl;
+            }
+            if (newToken) {
+                authToken = newToken;
+                document.getElementById('auth-token').textContent = newToken.substring(0, 20) + '...';
+            }
+        }
+
+        async function testEndpoint(endpoint, testId) {
+            const statusEl = document.getElementById(`status-${testId}`);
+            const responseEl = document.getElementById(`response-${testId}`);
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status warning';
+            responseEl.style.display = 'none';
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
+                console.log(`Testing: ${API_BASE_URL}${endpoint}`);
+                
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'GET',
+                    headers: headers
+                });
+
+                const responseData = await response.json();
+                
+                if (response.ok) {
+                    statusEl.textContent = `✅ Success (${response.status})`;
+                    statusEl.className = 'status success';
+                    
+                    responseEl.textContent = JSON.stringify(responseData, null, 2);
+                    responseEl.style.display = 'block';
+                    
+                    console.log(`✅ ${endpoint} Success:`, responseData);
+                } else {
+                    statusEl.textContent = `❌ Error (${response.status})`;
+                    statusEl.className = 'status error';
+                    
+                    responseEl.textContent = `HTTP ${response.status}: ${JSON.stringify(responseData, null, 2)}`;
+                    responseEl.style.display = 'block';
+                    
+                    console.log(`❌ ${endpoint} Error:`, response.status, responseData);
+                }
+                
+            } catch (error) {
+                statusEl.textContent = `❌ Network Error`;
+                statusEl.className = 'status error';
+                
+                responseEl.textContent = `Network Error: ${error.message}`;
+                responseEl.style.display = 'block';
+                
+                console.error(`❌ ${endpoint} Network Error:`, error);
+            }
+            
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const results = {
+                customers: document.getElementById('status-customers').textContent,
+                analytics: document.getElementById('status-analytics').textContent,
+                orders: document.getElementById('status-orders').textContent
+            };
+
+            let summary = '<h3>📊 Test Results:</h3><ul>';
+            let recommendations = '<h3>💡 Backend Implementation Recommendations:</h3><ul>';
+
+            // Analyze results
+            if (results.customers.includes('Success')) {
+                summary += '<li>✅ <strong>Customers endpoint</strong>: Working! Real customer data available.</li>';
+                recommendations += '<li>✅ Customer endpoint is working - frontend will use real data</li>';
+            } else if (results.customers.includes('404')) {
+                summary += '<li>⚠️ <strong>Customers endpoint</strong>: Not implemented (404)</li>';
+                recommendations += '<li>🔧 <strong>Priority 1</strong>: Implement GET /api/ecom/customers endpoint</li>';
+            } else {
+                summary += '<li>❌ <strong>Customers endpoint</strong>: Error or not tested</li>';
+                recommendations += '<li>🔧 Check customer endpoint implementation and authentication</li>';
+            }
+
+            if (results.analytics.includes('Success')) {
+                summary += '<li>✅ <strong>Analytics endpoint</strong>: Working! Customer analytics available.</li>';
+                recommendations += '<li>✅ Analytics endpoint working - dashboard will show real metrics</li>';
+            } else if (results.analytics.includes('404')) {
+                summary += '<li>⚠️ <strong>Analytics endpoint</strong>: Not implemented (404)</li>';
+                recommendations += '<li>🔧 <strong>Priority 2</strong>: Implement GET /api/ecom/customers/analytics endpoint</li>';
+            } else {
+                summary += '<li>❌ <strong>Analytics endpoint</strong>: Error or not tested</li>';
+            }
+
+            if (results.orders.includes('Success')) {
+                summary += '<li>✅ <strong>Orders endpoint</strong>: Working! Can aggregate customer data from orders.</li>';
+                recommendations += '<li>✅ Orders endpoint working - can use as fallback for customer data</li>';
+            } else {
+                summary += '<li>❌ <strong>Orders endpoint</strong>: Error - this breaks customer data aggregation</li>';
+                recommendations += '<li>🚨 <strong>Critical</strong>: Fix orders endpoint - needed for customer data fallback</li>';
+            }
+
+            summary += '</ul>';
+            recommendations += '</ul>';
+
+            // Add implementation guidance
+            if (!results.customers.includes('Success')) {
+                recommendations += `
+                <h4>🏗️ Quick Implementation Example:</h4>
+                <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 12px;">
+// Basic customer endpoint (15 minutes to implement)
+app.get('/api/ecom/customers', async (req, res) => {
+  try {
+    const customers = await db.query(\`
+      SELECT 
+        customer_email as email,
+        customer_name as name,
+        customer_phone as phone,
+        COUNT(*) as totalOrders,
+        SUM(total) as totalSpent,
+        MIN(created_at) as firstOrderDate,
+        MAX(created_at) as lastOrderDate
+      FROM orders 
+      WHERE customer_email IS NOT NULL
+      GROUP BY customer_email, customer_name, customer_phone
+      ORDER BY totalSpent DESC
+    \`);
+    
+    res.json({ 
+      success: true, 
+      data: customers.map(c => ({
+        id: c.email,
+        email: c.email,
+        name: c.name,
+        phone: c.phone,
+        stats: {
+          totalOrders: c.totalOrders,
+          totalSpent: c.totalSpent,
+          firstOrderDate: c.firstOrderDate,
+          lastOrderDate: c.lastOrderDate
+        }
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+                </pre>`;
+            }
+
+            document.getElementById('test-summary').innerHTML = summary;
+            document.getElementById('recommendations').innerHTML = recommendations;
+        }
+
+        // Initialize
+        document.getElementById('api-base-url').textContent = API_BASE_URL;
+        console.log('🧪 Customer Data Backend Test Ready');
+        console.log('📍 API Base URL:', API_BASE_URL);
+        console.log('🔧 Click buttons above to test endpoints');
+    </script>
+</body>
+</html>

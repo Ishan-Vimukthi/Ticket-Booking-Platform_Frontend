@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Customer Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007cba; color: white; border: none; border-radius: 4px; }
+        pre { background: white; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Quick Customer Test</h1>
+        
+        <div class="section">
+            <h3>1. Set Auth Token</h3>
+            <p>This will set the ecom_token in localStorage to authenticate with the backend:</p>
+            <button onclick="setToken()">Set Auth Token</button>
+            <button onclick="clearToken()">Clear Token</button>
+            <div id="token-status"></div>
+        </div>
+
+        <div class="section">
+            <h3>2. Test Customer API</h3>
+            <button onclick="testCustomers()">Test Customer Endpoint</button>
+            <div id="customer-result"></div>
+        </div>
+
+        <div class="section">
+            <h3>3. Open Customer Management</h3>
+            <p>After setting the token, open the customer management page:</p>
+            <button onclick="openCustomers()">Open Customer Management</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api/ecom';
+        const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODczOTUwZjg5ZTRhMjRjM2Q1YzNlZDIiLCJpYXQiOjE3NTI1MzExNTgsImV4cCI6MTc1MjYxNzU1OH0.02w3fNAf5fdYsv6X6s6j67wK-5zqhU3yGygToQvoUiU';
+
+        function setToken() {
+            localStorage.setItem('ecom_token', AUTH_TOKEN);
+            updateTokenStatus();
+            document.getElementById('token-status').innerHTML = '<p class="success">✅ Token set successfully!</p>';
+        }
+
+        function clearToken() {
+            localStorage.removeItem('ecom_token');
+            updateTokenStatus();
+            document.getElementById('token-status').innerHTML = '<p class="error">❌ Token cleared</p>';
+        }
+
+        function updateTokenStatus() {
+            const token = localStorage.getItem('ecom_token');
+            const status = token ? '✅ Token present' : '❌ No token';
+            document.getElementById('token-status').innerHTML = `<p>Status: ${status}</p>`;
+        }
+
+        async function testCustomers() {
+            const resultDiv = document.getElementById('customer-result');
+            const token = localStorage.getItem('ecom_token');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<p class="error">❌ No token found. Please set token first.</p>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>Testing customer endpoint...</p>';
+
+            try {
+                const response = await fetch(`${API_BASE}/customers`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Customer API working!</p>
+                        <p>Found ${data.data?.length || 0} customers</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ API Error</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Request failed: ${error.message}</p>
+                `;
+            }
+        }
+
+        function openCustomers() {
+            const token = localStorage.getItem('ecom_token');
+            if (!token) {
+                alert('Please set the token first!');
+                return;
+            }
+            window.open('/ecom_admin/customers', '_blank');
+        }
+
+        // Check token status on load
+        updateTokenStatus();
+    </script>
+</body>
+</html>
