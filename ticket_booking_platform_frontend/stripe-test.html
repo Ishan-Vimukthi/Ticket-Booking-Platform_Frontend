@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stripe Test</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        #card-element { padding: 10px; border: 1px solid #ccc; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Stripe Elements Test</h1>
+    
+    <button onclick="testBackendConfig()">Test Backend Config</button>
+    <button onclick="testDirectStripe()">Test Direct Stripe</button>
+    <button onclick="createCardElement()">Create Card Element</button>
+    
+    <div id="results"></div>
+    
+    <div id="card-container" style="display: none;">
+        <h3>Stripe Card Element:</h3>
+        <div id="card-element"></div>
+        <button onclick="testPayment()">Test Payment</button>
+    </div>
+
+    <script>
+        const PUBLISHABLE_KEY = 'pk_test_51RflZsH8Y4NurIedtVJjjow0vcGgcSjiakk7ukq6V7ylUwk3aKIUiySY3h9COv0IBi3ISnoQSw1kF0pllVuxzTUg00YRySt0o2';
+        let stripe = null;
+        let cardElement = null;
+
+        function log(message, success = true) {
+            const div = document.createElement('div');
+            div.className = `result ${success ? 'success' : 'error'}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        async function testBackendConfig() {
+            try {
+                log('🔑 Testing backend Stripe config...');
+                
+                const response = await fetch('http://localhost:3000/api/ecom/payments/config');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Backend Config Success: ${JSON.stringify(data, null, 2)}`);
+                    if (data.data && data.data.publishableKey) {
+                        log(`✅ Publishable Key: ${data.data.publishableKey}`);
+                        return data.data.publishableKey;
+                    }
+                } else {
+                    log(`❌ Backend Config Failed: ${response.status} - ${JSON.stringify(data)}`, false);
+                }
+            } catch (error) {
+                log(`❌ Network Error: ${error.message}`, false);
+            }
+            return null;
+        }
+
+        async function testDirectStripe() {
+            try {
+                log('🔗 Testing direct Stripe initialization...');
+                
+                stripe = Stripe(PUBLISHABLE_KEY);
+                log('✅ Stripe initialized successfully with direct key');
+                
+                document.getElementById('card-container').style.display = 'block';
+                return true;
+            } catch (error) {
+                log(`❌ Direct Stripe failed: ${error.message}`, false);
+                return false;
+            }
+        }
+
+        async function createCardElement() {
+            if (!stripe) {
+                const success = await testDirectStripe();
+                if (!success) return;
+            }
+
+            try {
+                log('💳 Creating Stripe card element...');
+                
+                const elements = stripe.elements();
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#424770',
+                            '::placeholder': {
+                                color: '#aab7c4',
+                            },
+                        },
+                    },
+                });
+
+                cardElement.mount('#card-element');
+                log('✅ Card element created and mounted');
+                
+                cardElement.on('change', ({error}) => {
+                    if (error) {
+                        log(`❌ Card error: ${error.message}`, false);
+                    } else {
+                        log('✅ Card input looks valid');
+                    }
+                });
+                
+            } catch (error) {
+                log(`❌ Card element creation failed: ${error.message}`, false);
+            }
+        }
+
+        async function testPayment() {
+            if (!stripe || !cardElement) {
+                log('❌ Stripe or card element not ready', false);
+                return;
+            }
+
+            log('💳 Testing payment method creation...');
+            
+            const {error, paymentMethod} = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+            });
+
+            if (error) {
+                log(`❌ Payment method creation failed: ${error.message}`, false);
+            } else {
+                log(`✅ Payment method created: ${paymentMethod.id}`);
+            }
+        }
+
+        // Auto-run backend test
+        window.onload = function() {
+            testBackendConfig();
+        };
+    </script>
+</body>
+</html>

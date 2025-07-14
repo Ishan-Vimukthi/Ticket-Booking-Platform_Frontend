@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>E-commerce Flow Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 E-commerce Flow Test</h1>
+    
+    <div class="step">
+        <h3>Step 1: Clear Storage & Check Environment</h3>
+        <button class="btn-primary" onclick="clearStorage()">Clear All Storage</button>
+        <button class="btn-primary" onclick="checkEnvironment()">Check Environment</button>
+        <div id="env-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Test Authentication</h3>
+        <button class="btn-primary" onclick="testAuth()">Test Login (admin@gmail.com / admin123)</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>Step 3: Test Categories</h3>
+        <button class="btn-primary" onclick="testCategories()">Fetch Categories</button>
+        <div id="categories-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>Step 4: Test Product Creation</h3>
+        <button class="btn-primary" onclick="testProductCreation()">Create Test Product</button>
+        <div id="product-creation-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>Step 5: Test Product Fetch</h3>
+        <button class="btn-primary" onclick="testProductFetch()">Fetch All Products</button>
+        <div id="product-fetch-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>Step 6: Test Shop Page Integration</h3>
+        <button class="btn-primary" onclick="testShopIntegration()">Test Shop Service</button>
+        <div id="shop-result"></div>
+    </div>
+
+    <script>
+        // Base URL
+        const API_BASE = 'http://localhost:3000/api/ecom';
+        
+        function updateResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = content;
+            element.className = type;
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            updateResult('env-result', '✅ All storage cleared', 'success');
+        }
+
+        function checkEnvironment() {
+            const viteUrl = window.location.origin;
+            const expectedApiUrl = 'http://localhost:3000/api/ecom';
+            
+            updateResult('env-result', `
+                <h4>Environment Check:</h4>
+                <pre>
+Frontend URL: ${viteUrl}
+Expected API URL: ${expectedApiUrl}
+Local Storage: ${Object.keys(localStorage).length} items
+Session Storage: ${Object.keys(sessionStorage).length} items
+                </pre>
+            `, 'warning');
+        }
+
+        async function testAuth() {
+            try {
+                updateResult('auth-result', '🔄 Testing authentication...', 'warning');
+                
+                const response = await fetch(`${API_BASE}/auth/signin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@gmail.com',
+                        password: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.token) {
+                    localStorage.setItem('ecom_token', data.token);
+                    updateResult('auth-result', `
+                        <h4>✅ Authentication Success</h4>
+                        <pre>
+Status: ${response.status}
+Token: ${data.token.substring(0, 30)}...
+User: ${JSON.stringify(data.user || {}, null, 2)}
+                        </pre>
+                    `, 'success');
+                } else {
+                    updateResult('auth-result', `
+                        <h4>❌ Authentication Failed</h4>
+                        <pre>
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}
+                        </pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                updateResult('auth-result', `
+                    <h4>❌ Authentication Error</h4>
+                    <pre>Error: ${error.message}</pre>
+                `, 'error');
+            }
+        }
+
+        async function testCategories() {
+            try {
+                updateResult('categories-result', '🔄 Fetching categories...', 'warning');
+                
+                const token = localStorage.getItem('ecom_token');
+                if (!token) {
+                    updateResult('categories-result', '❌ No token found. Please login first.', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/categories`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+                
+                updateResult('categories-result', `
+                    <h4>📁 Categories Result</h4>
+                    <pre>
+Status: ${response.status}
+Data: ${JSON.stringify(data, null, 2)}
+                    </pre>
+                `, response.ok ? 'success' : 'error');
+            } catch (error) {
+                updateResult('categories-result', `
+                    <h4>❌ Categories Error</h4>
+                    <pre>Error: ${error.message}</pre>
+                `, 'error');
+            }
+        }
+
+        async function testProductCreation() {
+            try {
+                updateResult('product-creation-result', '🔄 Creating test product...', 'warning');
+                
+                const token = localStorage.getItem('ecom_token');
+                if (!token) {
+                    updateResult('product-creation-result', '❌ No token found. Please login first.', 'error');
+                    return;
+                }
+
+                // Create a simple test image
+                const canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#4F46E5';
+                ctx.fillRect(0, 0, 100, 100);
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText('TEST', 30, 55);
+
+                return new Promise((resolve) => {
+                    canvas.toBlob(async (blob) => {
+                        const file = new File([blob], 'test-product.png', { type: 'image/png' });
+                        
+                        const formData = new FormData();
+                        formData.append('name', `Test Product ${Date.now()}`);
+                        formData.append('description', 'Test product created from browser test');
+                        formData.append('category', '68739303f8b354a3f2094ea3');
+                        formData.append('images', file);
+
+                        try {
+                            const response = await fetch(`${API_BASE}/products`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` },
+                                body: formData
+                            });
+
+                            const data = await response.json();
+                            
+                            updateResult('product-creation-result', `
+                                <h4>🏗️ Product Creation Result</h4>
+                                <pre>
+Status: ${response.status}
+Data: ${JSON.stringify(data, null, 2)}
+                                </pre>
+                            `, response.ok ? 'success' : 'error');
+                            resolve();
+                        } catch (error) {
+                            updateResult('product-creation-result', `
+                                <h4>❌ Product Creation Error</h4>
+                                <pre>Error: ${error.message}</pre>
+                            `, 'error');
+                            resolve();
+                        }
+                    }, 'image/png');
+                });
+            } catch (error) {
+                updateResult('product-creation-result', `
+                    <h4>❌ Product Creation Error</h4>
+                    <pre>Error: ${error.message}</pre>
+                `, 'error');
+            }
+        }
+
+        async function testProductFetch() {
+            try {
+                updateResult('product-fetch-result', '🔄 Fetching all products...', 'warning');
+                
+                const token = localStorage.getItem('ecom_token');
+                
+                const response = await fetch(`${API_BASE}/products`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                const data = await response.json();
+                
+                updateResult('product-fetch-result', `
+                    <h4>📦 All Products Result</h4>
+                    <pre>
+Status: ${response.status}
+Total Products: ${data.data?.length || 0}
+Data: ${JSON.stringify(data, null, 2)}
+                    </pre>
+                `, response.ok ? 'success' : 'error');
+            } catch (error) {
+                updateResult('product-fetch-result', `
+                    <h4>❌ Product Fetch Error</h4>
+                    <pre>Error: ${error.message}</pre>
+                `, 'error');
+            }
+        }
+
+        async function testShopIntegration() {
+            try {
+                updateResult('shop-result', '🔄 Testing shop integration...', 'warning');
+                
+                // Simulate what the Shop.jsx page does
+                const response = await fetch(`${API_BASE}/products`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const transformedProducts = result.data.map(product => ({
+                        id: product._id,
+                        name: product.name,
+                        price: product.price,
+                        image: product.images?.[0] || '/images/products/default.jpg',
+                        category: 'tshirt',
+                        rating: 4.5,
+                        sizes: product.sizes || ['S', 'M', 'L', 'XL'],
+                        colors: product.colors || [],
+                        description: product.description,
+                        sku: product.sku,
+                        isActive: product.isActive
+                    }));
+                    
+                    updateResult('shop-result', `
+                        <h4>🛍️ Shop Integration Test</h4>
+                        <pre>
+Products for Shop: ${transformedProducts.length}
+Transformed Data: ${JSON.stringify(transformedProducts, null, 2)}
+                        </pre>
+                    `, 'success');
+                } else {
+                    updateResult('shop-result', `
+                        <h4>❌ Shop Integration Failed</h4>
+                        <pre>Result: ${JSON.stringify(result, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                updateResult('shop-result', `
+                    <h4>❌ Shop Integration Error</h4>
+                    <pre>Error: ${error.message}</pre>
+                `, 'error');
+            }
+        }
+
+        // Auto-check environment on load
+        window.onload = () => {
+            checkEnvironment();
+        };
+    </script>
+</body>
+</html>

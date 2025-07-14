@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Backend API Test</h1>
+    <p>Test if backend APIs are working before testing payment flow.</p>
+    
+    <button onclick="testStripeConfig()">Test Stripe Config</button>
+    <button onclick="testAuth()">Test Authentication</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api/ecom';
+        
+        function log(message, success = true) {
+            const div = document.createElement('div');
+            div.className = `test ${success ? 'success' : 'error'}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        async function testStripeConfig() {
+            try {
+                log('🔑 Testing Stripe Config API...');
+                
+                const response = await fetch(`${API_BASE}/payments/config`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Stripe Config Success: ${JSON.stringify(data)}`, true);
+                    if (data.data && data.data.publishableKey) {
+                        log(`✅ Publishable Key Found: ${data.data.publishableKey.substring(0, 20)}...`, true);
+                    } else {
+                        log(`❌ No publishable key in response`, false);
+                    }
+                } else {
+                    log(`❌ Stripe Config Failed: ${response.status} - ${JSON.stringify(data)}`, false);
+                }
+            } catch (error) {
+                log(`❌ Network Error: ${error.message}`, false);
+            }
+        }
+
+        async function testAuth() {
+            try {
+                log('🔐 Testing Authentication...');
+                
+                const token = localStorage.getItem('ecom_token');
+                if (!token) {
+                    log('❌ No ecom_token found in localStorage. You may need to login first.', false);
+                    return;
+                }
+
+                log(`✅ Token found: ${token.substring(0, 20)}...`, true);
+                
+                // Test with authentication
+                const response = await fetch(`${API_BASE}/payments/config`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Authenticated Request Success`, true);
+                } else {
+                    log(`❌ Authenticated Request Failed: ${response.status}`, false);
+                }
+            } catch (error) {
+                log(`❌ Auth Test Error: ${error.message}`, false);
+            }
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            log('🚀 Starting Backend API Tests...');
+            setTimeout(testStripeConfig, 1000);
+        };
+    </script>
+</body>
+</html>
