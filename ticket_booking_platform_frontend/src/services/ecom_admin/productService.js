@@ -696,6 +696,39 @@ export const productService = {
       console.error('❌ Error permanently deleting product:', error);
       return { success: false, error: error.message };
     }
+  },
+
+  // Get all products - ADDED FOR DASHBOARD INTEGRATION
+  async getProducts() {
+    try {
+      console.log('📦 Fetching all products...');
+      
+      const response = await fetch(`${API_BASE_URL}/products`, {
+        method: 'GET',
+        headers: createHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Products fetched successfully:', result);
+      
+      return {
+        success: result.status === 'SUCCESS',
+        products: result.data || [],
+        data: result.data || []
+      };
+    } catch (error) {
+      console.error('❌ Error fetching products:', error);
+      return { 
+        success: false, 
+        error: error.message,
+        products: [],
+        data: []
+      };
+    }
   }
 };
 

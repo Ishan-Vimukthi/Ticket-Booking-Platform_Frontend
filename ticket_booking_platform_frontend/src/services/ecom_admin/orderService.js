@@ -158,9 +158,21 @@ export const orderService = {
       const data = await response.json();
       console.log('✅ Orders received from backend:', data);
       
+      // Handle new response format: {"success":true,"data":[...]}
+      const isSuccess = data.success === true || data.status === "SUCCESS";
+      const orders = data.data || data.orders || [];
+      
+      if (!isSuccess) {
+        console.warn('⚠️ Orders response indicates failure:', data);
+        return await this.getOrdersFromPayments();
+      }
+      
+      // Transform orders data to frontend format
+      const transformedOrders = this.transformOrdersData(orders);
+      
       return { 
         success: true, 
-        data: data.data || data.orders || [] 
+        data: transformedOrders 
       };
       
     } catch (error) {
@@ -187,16 +199,34 @@ export const orderService = {
         // Return mock data for demonstration if no backend endpoint exists
         return { 
           success: true, 
-          data: mockOrders 
+          data: mockOrders,
+          needsFallback: true
         };
       }
 
       const data = await response.json();
       console.log('✅ Orders received from payments endpoint:', data);
       
+      // Handle response format: {"success":true,"data":{"orders":[...],"pagination":{...}}}
+      const isSuccess = data.success === true || data.status === "SUCCESS";
+      const ordersData = data.data?.orders || data.orders || [];
+      
+      if (!isSuccess) {
+        console.warn('⚠️ Payments response indicates failure:', data);
+        return { 
+          success: true, 
+          data: mockOrders,
+          needsFallback: true
+        };
+      }
+      
+      // Transform payment orders to frontend format
+      const transformedOrders = this.transformOrdersData(ordersData);
+      
       return { 
         success: true, 
-        data: data.data || data.orders || [] 
+        data: transformedOrders,
+        pagination: data.data?.pagination || null
       };
       
     } catch (error) {
@@ -292,6 +322,107 @@ export const orderService = {
       }
       
       return { success: false, error: error.message };
+    }
+  },
+
+  // Transform backend order data to frontend format
+  transformOrdersData(ordersData) {
+    return ordersData.map(order => ({
+      _id: order._id || order.id,
+      orderNumber: order.orderNumber || `ORD-${order._id?.slice(-8)}`,
+      customer: {
+        name: order.customerInfo?.name || order.customer?.name || 'Unknown Customer',
+        email: order.customerInfo?.email || order.customer?.email || 'No email',
+        phone: order.customerInfo?.phone || order.customer?.phone || 'No phone'
+      },
+      items: order.items?.length || 0,
+      itemsList: order.items?.map(item => ({
+        product: item.productName || item.product?.name || 'Unknown Product',
+        productCode: item.productCode || item.product?.productCode || '',
+        quantity: item.quantity || 1,
+        size: item.size || '',
+        color: item.color || '',
+        price: item.price || 0,
+        subtotal: item.subtotal || (item.price * item.quantity)
+      })) || [],
+      subtotal: order.subtotal || 0,
+      tax: order.tax || 0,
+      shipping: order.shipping || 0,
+      total: order.total || order.totalAmount || 0,
+      status: this.mapOrderStatus(order.status, order.paymentStatus),
+      paymentMethod: order.paymentMethod || 'unknown',
+      paymentStatus: order.paymentStatus || 'unknown',
+      paymentIntentId: order.paymentIntentId || '',
+      shippingAddress: order.customerInfo?.address ? 
+        `${order.customerInfo.address.street}, ${order.customerInfo.address.city}, ${order.customerInfo.address.state} ${order.customerInfo.address.zipCode}` :
+        (order.shippingAddress || 'No address provided'),
+      date: order.createdAt || order.date,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt
+    }));
+  },
+
+  // Map backend status to frontend status
+  mapOrderStatus(orderStatus, paymentStatus) {
+    // Priority: Use order status first, then payment status
+    if (orderStatus) {
+      switch (orderStatus.toLowerCase()) {
+        case 'confirmed':
+        case 'completed':
+          return 'completed';
+        case 'pending':
+          return 'pending';
+        case 'processing':
+          return 'processing';
+        case 'cancelled':
+        case 'canceled':
+          return 'cancelled';
+        default:
+          return orderStatus.toLowerCase();
+      }
+    }
+    
+    // Fallback to payment status
+    if (paymentStatus) {
+      switch (paymentStatus.toLowerCase()) {
+        case 'succeeded':
+        case 'paid':
+          return 'completed';
+        case 'pending':
+          return 'pending';
+        case 'processing':
+          return 'processing';
+        case 'failed':
+        case 'cancelled':
+          return 'cancelled';
+        default:
+          return 'pending';
+      }
+    }
+    
+    return 'pending';
+  },
+
+  // Alias for dashboard compatibility - ADDED FOR DASHBOARD INTEGRATION
+  async getOrders() {
+    try {
+      console.log('📦 Dashboard requesting orders...');
+      const result = await this.getAllOrders();
+      
+      // Ensure consistent return format for dashboard
+      return {
+        success: result.success,
+        orders: result.orders || result.data || [],
+        data: result.orders || result.data || []
+      };
+    } catch (error) {
+      console.error('❌ Error in getOrders:', error);
+      return { 
+        success: false, 
+        error: error.message,
+        orders: [],
+        data: []
+      };
     }
   }
 };

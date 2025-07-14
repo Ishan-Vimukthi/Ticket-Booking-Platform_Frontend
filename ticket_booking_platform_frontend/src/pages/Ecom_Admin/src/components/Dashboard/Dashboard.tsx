@@ -6,13 +6,14 @@ import CategoryChart from './Charts/CategoryChart';
 import StockChart from './Charts/StockChart';
 import RecentOrders from './RecentOrders';
 import LowStockAlert from './LowStockAlert';
-import dashboardService from '../../services/dashboardService';
+// import dashboardService from '../../services/dashboardService';
 import { DashboardOverview, RevenueData, StockData } from './dashboardTypes';
 
 const Dashboard: React.FC = () => {
   const [overviewData, setOverviewData] = useState<DashboardOverview | null>(null);
   const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
   const [stockData, setStockData] = useState<StockData | null>(null);
+  const [recentOrdersList, setRecentOrdersList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,18 +23,113 @@ const Dashboard: React.FC = () => {
         setIsLoading(true);
         setError(null);
 
-        const { overview, revenue, stock } = await dashboardService.fetchAllDashboardData();
+        // Use real e-commerce endpoints instead of mock service
+        const API_BASE_URL = import.meta.env.VITE_ECOM_API_URL || 'http://localhost:3000/api/ecom';
+        const token = localStorage.getItem('ecom_token');
+        
+        if (!token) {
+          throw new Error('No authentication token found. Please login with admin@gmail.com / admin123');
+        }
+
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        };
+
+        // Fetch real data from e-commerce endpoints
+        const [productsRes, customersRes, ordersRes] = await Promise.allSettled([
+          fetch(`${API_BASE_URL}/products`, { headers }),
+          fetch(`${API_BASE_URL}/customers`, { headers }),
+          fetch(`${API_BASE_URL}/payments/orders`, { headers })
+        ]);
+
+        // Process products
+        let totalProducts = 0;
+        if (productsRes.status === 'fulfilled' && productsRes.value.ok) {
+          const productsData = await productsRes.value.json();
+          totalProducts = productsData.data?.length || 0;
+        }
+
+        // Process customers  
+        let totalCustomers = 0;
+        if (customersRes.status === 'fulfilled' && customersRes.value.ok) {
+          const customersData = await customersRes.value.json();
+          totalCustomers = customersData.data?.length || 0;
+        }
+
+        // Process orders
+        let totalOrders = 0;
+        let totalRevenue = 0;
+        let recentOrdersList: any[] = [];
+        if (ordersRes.status === 'fulfilled' && ordersRes.value.ok) {
+          const ordersData = await ordersRes.value.json();
+          const orders = ordersData.data?.orders || [];
+          totalOrders = orders.length;
+          totalRevenue = orders.reduce((sum: number, order: any) => sum + parseFloat(order.amount || 0), 0);
+          
+          // Get recent orders for display with customer info
+          recentOrdersList = orders
+            .sort((a: any, b: any) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
+            .slice(0, 5)
+            .map((order: any) => ({
+              id: order._id || order.id,
+              customer: {
+                id: order.customerId || 'unknown',
+                firstName: (order.customerInfo?.name || order.customer?.name || 'Unknown').split(' ')[0] || 'Unknown',
+                lastName: (order.customerInfo?.name || order.customer?.name || 'Customer').split(' ')[1] || 'Customer',
+                name: order.customerInfo?.name || order.customer?.name || 'Unknown Customer',
+                email: order.customerInfo?.email || order.customer?.email || 'no-email@example.com',
+                phone: order.customerInfo?.phone || order.customer?.phone || 'N/A',
+                address: order.customerInfo?.address?.street || 'N/A',
+                city: order.customerInfo?.address?.city || 'N/A',
+                state: order.customerInfo?.address?.state || 'N/A'
+              },
+              amount: parseFloat(order.amount || order.total || 0),
+              status: order.status || 'pending',
+              date: order.createdAt || order.date
+            }));
+        }
+
+        // Create overview data matching the expected types
+        const overview: DashboardOverview = {
+          counts: {
+            products: totalProducts,
+            customers: totalCustomers,
+            orders: totalOrders,
+            revenue: totalRevenue
+          },
+          monthlyStats: {
+            totalRevenue,
+            orderCount: totalOrders,
+            avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0
+          },
+          recentOrders: recentOrdersList.map(order => ({
+            id: order.id,
+            date: order.date,
+            amount: order.amount,
+            status: order.status
+          })),
+          lowStockItems: [],
+          salesByCategory: []
+        };
+
+        // Create revenue data matching expected types
+        const revenue: RevenueData = {
+          summary: {
+            totalRevenue,
+            totalOrders,
+            avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0
+          },
+          revenueByPeriod: []
+        };
 
         setOverviewData(overview);
         setRevenueData(revenue);
-        setStockData(stock);
+        setStockData(null); // We don't have stock chart data yet
+        setRecentOrdersList(recentOrdersList);
 
-        if (!overview && !revenue && !stock) {
-          setError('Failed to fetch dashboard data');
-        }
-
-      } catch (err) {
-        setError('Failed to fetch dashboard data');
+      } catch (err: any) {
+        setError('Failed to fetch dashboard data: ' + (err.message || 'Unknown error'));
         console.error('Dashboard fetch error:', err);
       } finally {
         setIsLoading(false);
@@ -133,7 +229,7 @@ const Dashboard: React.FC = () => {
         )}
         
         {overviewData?.recentOrders && overviewData.recentOrders.length > 0 ? (
-          <RecentOrders orders={overviewData.recentOrders} />
+          <RecentOrders orders={recentOrdersList as any} />
         ) : (
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold mb-4">Recent Orders</h3>

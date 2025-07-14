@@ -1,58 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, FileText, Eye } from 'lucide-react';
+import { Search, FileText, Eye, AlertCircle } from 'lucide-react';
+import { orderService } from '../../../services/ecom_admin/orderService';
 
 const OrderList = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState('');
+
+  const loadOrders = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      console.log('📋 Loading orders...');
+      
+      const result = await orderService.getAllOrders();
+      
+      if (result.success) {
+        setOrders(result.data || []);
+        console.log('✅ Orders loaded successfully:', result.data?.length || 0, 'orders');
+        
+        if (result.needsFallback) {
+          setError('Using demo data - backend orders endpoint not available');
+        }
+      } else {
+        throw new Error(result.error || 'Failed to load orders');
+      }
+      
+    } catch (err) {
+      console.error('❌ Error loading orders:', err);
+      setError(err.message || 'Failed to load orders');
+      setOrders([]); // Clear orders on error
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Simulate loading orders
-    const loadOrders = async () => {
-      setIsLoading(true);
-      setTimeout(() => {
-        setOrders([
-          { 
-            _id: '1', 
-            orderNumber: 'ORD-001',
-            customer: { name: 'John Doe', email: 'john@example.com' },
-            items: 3,
-            total: 89.97,
-            status: 'completed',
-            date: '2024-07-10'
-          },
-          { 
-            _id: '2', 
-            orderNumber: 'ORD-002',
-            customer: { name: 'Jane Smith', email: 'jane@example.com' },
-            items: 2,
-            total: 59.98,
-            status: 'pending',
-            date: '2024-07-11'
-          },
-          { 
-            _id: '3', 
-            orderNumber: 'ORD-003',
-            customer: { name: 'Mike Johnson', email: 'mike@example.com' },
-            items: 1,
-            total: 29.99,
-            status: 'processing',
-            date: '2024-07-12'
-          },
-        ]);
-        setIsLoading(false);
-      }, 1000);
-    };
-
     loadOrders();
   }, []);
 
-  const filteredOrders = orders.filter(order =>
-    order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.customer.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredOrders = orders.filter(order => {
+    if (!order) return false;
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      (order.orderNumber || '').toLowerCase().includes(searchLower) ||
+      (order.customer?.name || '').toLowerCase().includes(searchLower) ||
+      (order.customer?.email || '').toLowerCase().includes(searchLower) ||
+      (order.status || '').toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Debug logging
+  console.log('🔍 OrderList Debug:');
+  console.log('- orders array:', orders);
+  console.log('- orders length:', orders.length);
+  console.log('- filteredOrders length:', filteredOrders.length);
+  console.log('- searchQuery:', searchQuery);
+  console.log('- isLoading:', isLoading);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -83,7 +89,25 @@ const OrderList = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Orders Management</h1>
+        {orders.length > 0 && (
+          <div className="text-sm text-gray-600">
+            {orders.length} order{orders.length !== 1 ? 's' : ''} found
+          </div>
+        )}
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-yellow-400" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">Notice</h3>
+              <div className="mt-2 text-sm text-yellow-700">{error}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="mb-6">

@@ -19,13 +19,10 @@ const CustomerList = () => {
   const loadCustomerData = async () => {
     setIsLoading(true);
     try {
-      console.log('👥 Loading customer data...');
-      
       // First, try to get customer analytics from backend
       const analyticsResult = await customerService.getCustomerAnalytics();
       
       if (analyticsResult.success) {
-        console.log('✅ Using real customer analytics from backend');
         const realAnalytics = analyticsResult.data;
         
         setCustomerSummary({
@@ -34,19 +31,12 @@ const CustomerList = () => {
           activeCustomers: realAnalytics.totalCustomers - realAnalytics.newCustomersThisMonth,
           totalRevenue: realAnalytics.totalRevenue
         });
-        
-        console.log('📊 Real analytics loaded:', realAnalytics);
-        toast.success(`Real customer analytics loaded: ${realAnalytics.totalCustomers} customers, $${realAnalytics.totalRevenue} revenue`);
       }
       
       // Try to get customers from dedicated customer endpoint
       const customerResult = await customerService.getAllCustomers();
       
-      console.log('🔍 Customer result:', customerResult);
-      
       if (customerResult.success && customerResult.data && customerResult.data.length > 0) {
-        console.log('✅ Using real customer data from backend - Found', customerResult.data.length, 'customers');
-        
         // Process real customer data
         const customersWithTypes = customerResult.data.map(customer => ({
           ...customer,
@@ -58,24 +48,19 @@ const CustomerList = () => {
         }));
         
         setCustomers(customersWithTypes);
-        console.log('✅ Customer data loaded:', customersWithTypes.length, 'customers');
-        console.log('📊 Customer details:', customersWithTypes);
-        toast.success(`Real customer data loaded: ${customersWithTypes.length} customers with complete profiles`);
+        // Only show success toast when data is loaded successfully
+        toast.success(`Customer data loaded: ${customersWithTypes.length} customers`);
         return;
-      } else {
-        console.log('⚠️ Customer endpoint returned empty or failed:', customerResult);
       }
       
       // If customer endpoint returns empty data, check if we have real analytics
       if (analyticsResult.success && analyticsResult.data.totalCustomers > 0) {
-        console.log('📊 Analytics shows customers exist, but customer endpoint empty. Trying orders fallback...');
+        // Analytics shows customers exist, trying orders fallback
       }
       
       // Check if we have authentication token for orders fallback
       const token = localStorage.getItem('ecom_token');
       if (!token) {
-        console.log('⚠️ No authentication token found. Creating enhanced mock data based on analytics.');
-        
         // Create enhanced mock customer data based on real analytics
         const realAnalytics = analyticsResult.data || {};
         const mockCustomersWithAnalytics = [];
@@ -96,20 +81,16 @@ const CustomerList = () => {
         }
         
         setCustomers(mockCustomersWithAnalytics);
-        console.log('✅ Using enhanced mock data that matches real analytics');
-        toast.success(`Demo mode: ${mockCustomersWithAnalytics.length} customers based on real analytics`);
         return;
       }
       
       // Fallback: Get customer data from orders
-      console.log('📋 Falling back to order aggregation for customer data');
       
       // Get all orders to extract customer information
       const orderResult = await orderService.getAllOrders();
       
       if (orderResult.success) {
         const orders = orderResult.data;
-        console.log('📋 Orders received:', orders.length);
         
         // Group orders by customer email to create customer profiles
         const customerMap = new Map();
@@ -170,7 +151,6 @@ const CustomerList = () => {
         };
         setCustomerSummary(summary);
         
-        console.log('✅ Customer data processed successfully:', customerData.length, 'unique customers');
       } else {
         console.error('❌ Failed to load orders:', orderResult.error);
         toast.error('Failed to load customer data');

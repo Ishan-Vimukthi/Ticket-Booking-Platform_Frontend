@@ -71,7 +71,7 @@ export const dashboardService = {
         .slice(0, 5)
         .map(order => ({
           id: order._id || order.id,
-          customer: order.customer?.name || order.customer_name || order.customerName || 'Unknown Customer',
+          customer: order.customer_name || order.customerName || 'Unknown',
           amount: parseFloat(order.amount || order.total || 0),
           status: order.status || 'pending',
           date: order.createdAt || order.date

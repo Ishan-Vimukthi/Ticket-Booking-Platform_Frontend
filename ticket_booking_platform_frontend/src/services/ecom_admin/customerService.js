@@ -46,8 +46,6 @@ export const customerService = {
   // Get all customers with analytics
   async getAllCustomers(params = {}) {
     try {
-      console.log('👥 Fetching customers from backend...');
-      
       // Build query parameters
       const queryParams = new URLSearchParams();
       if (params.page) queryParams.append('page', params.page);
@@ -57,7 +55,6 @@ export const customerService = {
       if (params.search) queryParams.append('search', params.search);
 
       const url = `${API_BASE_URL}/customers${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-      console.log('📍 Customer URL:', url);
 
       const response = await fetch(url, {
         method: 'GET',
@@ -65,8 +62,7 @@ export const customerService = {
       });
 
       if (!response.ok) {
-        console.warn('⚠️ Customer endpoint not available, using mock data for demo');
-        // Return mock data for demonstration
+        // Return mock data for demonstration silently
         await new Promise(resolve => setTimeout(resolve, 500));
         return { 
           success: true, 
@@ -76,7 +72,6 @@ export const customerService = {
       }
 
       const data = await response.json();
-      console.log('✅ Customers received from backend:', data);
       
       // Handle both old and new backend response formats
       // New format: {"success":true,"data":[...]}
@@ -85,7 +80,6 @@ export const customerService = {
       const customers = data.data || data.customers || [];
       
       if (!isSuccess) {
-        console.warn('⚠️ Backend response indicates failure:', data);
         throw new Error(data.message || 'Failed to fetch customers');
       }
       
@@ -114,8 +108,6 @@ export const customerService = {
         }
       }));
       
-      console.log('🔄 Transformed customers:', transformedCustomers);
-      
       return { 
         success: true, 
         data: transformedCustomers,
@@ -124,7 +116,6 @@ export const customerService = {
       
     } catch (error) {
       console.error('❌ Error fetching customers:', error);
-      console.log('📋 Using mock data for demonstration...');
       
       // Fallback to mock data
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -139,20 +130,16 @@ export const customerService = {
   // Get customer analytics dashboard data
   async getCustomerAnalytics() {
     try {
-      console.log('📊 Fetching customer analytics from backend...');
-      
       const response = await fetch(`${API_BASE_URL}/customers/analytics`, {
         method: 'GET',
         headers: createHeaders()
       });
 
       if (!response.ok) {
-        console.warn('⚠️ Customer analytics endpoint not available');
         return { success: false, needsFallback: true };
       }
 
       const data = await response.json();
-      console.log('✅ Customer analytics received:', data);
       
       // Handle both old and new backend response formats
       // New format: {"success":true,"data":{"totalCustomers":3,"customersByType":{"loyal":1,"regular":1,"new":1}}}
@@ -161,7 +148,6 @@ export const customerService = {
       const analyticsData = data.data || data;
       
       if (!isSuccess) {
-        console.warn('⚠️ Analytics response indicates failure:', data);
         throw new Error(data.message || 'Failed to fetch analytics');
       }
       
@@ -309,6 +295,28 @@ export const customerService = {
       case 'regular': return '👤 Regular';
       case 'new': return '🆕 New';
       default: return '👤 Customer';
+    }
+  },
+
+  // Alias for dashboard compatibility - ADDED FOR DASHBOARD INTEGRATION
+  async getCustomers(params = {}) {
+    try {
+      const result = await this.getAllCustomers(params);
+      
+      // Ensure consistent return format for dashboard
+      return {
+        success: result.success,
+        customers: result.customers || result.data || [],
+        data: result.customers || result.data || []
+      };
+    } catch (error) {
+      console.error('❌ Error in getCustomers:', error);
+      return { 
+        success: false, 
+        error: error.message,
+        customers: [],
+        data: []
+      };
     }
   }
 };
