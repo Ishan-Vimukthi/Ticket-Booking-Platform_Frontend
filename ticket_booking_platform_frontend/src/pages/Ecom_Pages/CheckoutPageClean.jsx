@@ -222,7 +222,7 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(true);
   
   // Shipping and tax (you can make these dynamic)
-  const shipping = cartTotal > 50 ? 0 : 10.00;
+  const shipping = cartTotal > 50 ? 0 : 5.00;
   const tax = cartTotal * 0.08; // 8% tax
 
   const {

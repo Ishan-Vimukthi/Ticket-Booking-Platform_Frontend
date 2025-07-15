@@ -14,6 +14,18 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { stripeService } from '../../services/ecom_admin/stripeService';
 
+// Australian states list
+const australianStates = [
+  { value: 'NSW', label: 'New South Wales (NSW)' },
+  { value: 'VIC', label: 'Victoria (VIC)' },
+  { value: 'QLD', label: 'Queensland (QLD)' },
+  { value: 'WA', label: 'Western Australia (WA)' },
+  { value: 'SA', label: 'South Australia (SA)' },
+  { value: 'TAS', label: 'Tasmania (TAS)' },
+  { value: 'ACT', label: 'Australian Capital Territory (ACT)' },
+  { value: 'NT', label: 'Northern Territory (NT)' }
+];
+
 const checkoutSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(50),
   lastName: z.string().min(1, "Last name is required").max(50),
@@ -22,8 +34,10 @@ const checkoutSchema = z.object({
   address: z.string().min(5, "Address must be at least 5 characters"),
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
-  postalCode: z.string().min(4, "Postal code is required"),
-  country: z.string().min(1, "Country is required")
+  postalCode: z.string()
+    .min(4, "Australian postal code must be 4 digits")
+    .max(4, "Australian postal code must be 4 digits")
+    .regex(/^\d{4}$/, "Australian postal code must be exactly 4 digits")
 });
 
 // Stripe card element options
@@ -43,7 +57,7 @@ const cardElementOptions = {
 };
 
 // Payment Form Component (inside Stripe Elements)
-const PaymentForm = ({ customerInfo, cartItems, cartTotal, shipping, tax, onValidateForm }) => {
+const PaymentForm = ({ customerInfo, cartItems, cartTotal, shipping, onValidateForm }) => {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
@@ -97,8 +111,7 @@ const PaymentForm = ({ customerInfo, cartItems, cartTotal, shipping, tax, onVali
           color: item.colors?.[0] || null
         })),
         customerInfo: validationResult.data, // Use validated data
-        shipping,
-        tax
+        shipping
       };
 
       const paymentIntentResult = await stripeService.createPaymentIntent(paymentData);
@@ -138,7 +151,7 @@ const PaymentForm = ({ customerInfo, cartItems, cartTotal, shipping, tax, onVali
               city: validationResult.data.city,
               state: validationResult.data.state,
               postal_code: validationResult.data.postalCode,
-              country: validationResult.data.country
+              country: 'AU' // Fixed to Australia
             }
           }
         }
@@ -211,8 +224,7 @@ const PaymentForm = ({ customerInfo, cartItems, cartTotal, shipping, tax, onVali
           customerInfo: validationResult.data,
           subtotal: cartTotal,
           shipping,
-          tax,
-          total: cartTotal + shipping + tax,
+          total: cartTotal + shipping,
           paymentMethod: 'Credit Card',
           status: 'Confirmed',
           orderDate: new Date().toISOString(),
@@ -244,8 +256,7 @@ const PaymentForm = ({ customerInfo, cartItems, cartTotal, shipping, tax, onVali
           customerInfo: validationResult.data,
           subtotal: cartTotal,
           shipping,
-          tax,
-          total: cartTotal + shipping + tax,
+          total: cartTotal + shipping,
           paymentMethod: 'Credit Card',
           status: 'Confirmed',
           orderDate: new Date().toISOString(),
@@ -315,7 +326,7 @@ const PaymentForm = ({ customerInfo, cartItems, cartTotal, shipping, tax, onVali
             <span>Processing Payment...</span>
           </div>
         ) : (
-          `Complete Order • $${(cartTotal + shipping + tax).toFixed(2)}`
+          `Complete Order • $${(cartTotal + shipping).toFixed(2)}`
         )}
       </button>
     </div>
@@ -328,9 +339,8 @@ const CheckoutPage = () => {
   const [stripePromise, setStripePromise] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Shipping and tax (you can make these dynamic)
-  const shipping = cartTotal > 50 ? 0 : 10.00;
-  const tax = cartTotal * 0.08; // 8% tax
+  // Shipping (you can make this dynamic)
+  const shipping = cartTotal > 50 ? 0 : 5.00;
 
   const {
     register,
@@ -536,38 +546,30 @@ const CheckoutPage = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                    <input 
-                      type="text" 
+                    <select 
                       {...register('state')}
                       className={`w-full p-3 border rounded-lg ${errors.state ? 'border-red-500' : 'border-gray-300'}`}
-                    />
+                    >
+                      <option value="">Select State</option>
+                      {australianStates.map(state => (
+                        <option key={state.value} value={state.value}>
+                          {state.label}
+                        </option>
+                      ))}
+                    </select>
                     {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state.message}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
                     <input 
                       type="text" 
+                      placeholder="e.g. 3000"
+                      maxLength={4}
                       {...register('postalCode')}
                       className={`w-full p-3 border rounded-lg ${errors.postalCode ? 'border-red-500' : 'border-gray-300'}`}
                     />
                     {errors.postalCode && <p className="text-red-500 text-sm mt-1">{errors.postalCode.message}</p>}
                   </div>
-                </div>
-                
-                {/* Country */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                  <select 
-                    {...register('country')}
-                    className={`w-full p-3 border rounded-lg ${errors.country ? 'border-red-500' : 'border-gray-300'}`}
-                  >
-                    <option value="">Select Country</option>
-                    <option value="AU">Australia</option>
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="GB">United Kingdom</option>
-                  </select>
-                  {errors.country && <p className="text-red-500 text-sm mt-1">{errors.country.message}</p>}
                 </div>
               </form>
             </div>
@@ -588,7 +590,6 @@ const CheckoutPage = () => {
                   cartItems={cartItems}
                   cartTotal={cartTotal}
                   shipping={shipping}
-                  tax={tax}
                   onValidateForm={validateForm}
                 />
               </Elements>
@@ -689,6 +690,13 @@ const CheckoutPage = () => {
               ))}
             </div>
             
+            {/* Shipping Information */}
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Shipping:</strong> Standard shipping ($5.00) • Free shipping on orders over $50
+              </p>
+            </div>
+            
             {/* Order Totals */}
             <div className="border-t pt-4 space-y-2">
               <div className="flex justify-between">
@@ -699,13 +707,9 @@ const CheckoutPage = () => {
                 <span>Shipping</span>
                 <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>${tax.toFixed(2)}</span>
-              </div>
               <div className="flex justify-between text-lg font-semibold border-t pt-2">
                 <span>Total</span>
-                <span>${(cartTotal + shipping + tax).toFixed(2)}</span>
+                <span>${(cartTotal + shipping).toFixed(2)}</span>
               </div>
             </div>
           </div>

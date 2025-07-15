@@ -144,7 +144,7 @@ const CartSlider = () => {
             </div>
             
             <p className="text-xs text-gray-500 text-center mb-4">
-              Shipping calculated at checkout
+              Standard shipping $5.00 • Free over $50
             </p>
             
             <div className="flex justify-center">

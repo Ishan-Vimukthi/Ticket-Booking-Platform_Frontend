@@ -22,8 +22,14 @@ const mockCustomers = [
     _id: '1',
     name: 'John Doe',
     email: 'john@example.com',
-    phone: '+1234567890',
-    address: '123 Main St, City, State 12345',
+    phone: '+61234567890',
+    address: {
+      street: '123 Collins Street',
+      city: 'Melbourne',
+      state: 'VIC',
+      postalCode: '3000',
+      country: 'AU'
+    },
     totalOrders: 15,
     totalSpent: 899.75,
     joinedDate: '2024-01-15T00:00:00Z',
@@ -33,8 +39,14 @@ const mockCustomers = [
     _id: '2',
     name: 'Jane Smith',
     email: 'jane@example.com',
-    phone: '+1234567891',
-    address: '456 Oak Ave, City, State 67890',
+    phone: '+61234567891',
+    address: {
+      street: '456 George Street',
+      city: 'Sydney',
+      state: 'NSW',
+      postalCode: '2000',
+      country: 'AU'
+    },
     totalOrders: 8,
     totalSpent: 445.50,
     joinedDate: '2024-02-20T00:00:00Z',

@@ -23,7 +23,7 @@ const OrderConfirmation = () => {
 
         // If not available, fetch from backend
         if (orderId) {
-          console.log('📋 Fetching order details for:', orderId);
+          console.log('Fetching order details for:', orderId);
           const result = await stripeService.getOrderDetails(orderId);
           
           if (result.success) {
@@ -68,7 +68,7 @@ const OrderConfirmation = () => {
             Thank you for your purchase! Your order has been successfully processed.
           </p>
           <p className="text-lg text-green-600 font-medium">
-            ✅ Payment completed • 📦 Order confirmed • 🚚 Processing started
+            Payment completed • Order confirmed • Processing started
           </p>
         </div>
 
@@ -116,7 +116,7 @@ const OrderConfirmation = () => {
         {/* Order Items Summary */}
         {orderDetails?.items && orderDetails.items.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">📦 Items Purchased</h3>
+            <h3 className="text-lg font-semibold mb-4">Items Purchased</h3>
             <div className="space-y-4">
               {orderDetails.items.map((item, index) => (
                 <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
@@ -167,10 +167,6 @@ const OrderConfirmation = () => {
                     {(orderDetails.shipping || 0) === 0 ? 'Free' : `$${orderDetails.shipping?.toFixed(2)}`}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tax:</span>
-                  <span className="font-medium">${orderDetails.tax?.toFixed(2) || '0.00'}</span>
-                </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
                   <span>Total:</span>
                   <span className="text-green-600">${orderDetails.total?.toFixed(2) || '0.00'}</span>
@@ -183,7 +179,7 @@ const OrderConfirmation = () => {
         {/* Customer Information */}
         {orderDetails?.customerInfo && (
           <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">📋 Shipping Information</h3>
+            <h3 className="text-lg font-semibold mb-4">Shipping Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">Customer Details</h4>
@@ -207,31 +203,39 @@ const OrderConfirmation = () => {
 
         {/* What's Next */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 mb-6 border border-blue-100">
-          <h3 className="text-2xl font-bold text-blue-900 mb-6 text-center">📋 What happens next?</h3>
+          <h3 className="text-2xl font-bold text-blue-900 mb-6 text-center">What happens next?</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex items-start space-x-4 p-4 bg-white rounded-lg shadow-sm">
-              <span className="text-3xl">📧</span>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-semibold">1</span>
+              </div>
               <div>
                 <h4 className="font-semibold text-gray-900 mb-1">Email Confirmation</h4>
                 <p className="text-gray-600 text-sm">You'll receive an order confirmation email shortly with all the details</p>
               </div>
             </div>
             <div className="flex items-start space-x-4 p-4 bg-white rounded-lg shadow-sm">
-              <span className="text-3xl">📦</span>
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-600 font-semibold">2</span>
+              </div>
               <div>
                 <h4 className="font-semibold text-gray-900 mb-1">Order Processing</h4>
                 <p className="text-gray-600 text-sm">Your order will be processed and packaged within 1-2 business days</p>
               </div>
             </div>
             <div className="flex items-start space-x-4 p-4 bg-white rounded-lg shadow-sm">
-              <span className="text-3xl">🚚</span>
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-orange-600 font-semibold">3</span>
+              </div>
               <div>
                 <h4 className="font-semibold text-gray-900 mb-1">Shipping Updates</h4>
                 <p className="text-gray-600 text-sm">You'll receive tracking information once your order ships</p>
               </div>
             </div>
             <div className="flex items-start space-x-4 p-4 bg-white rounded-lg shadow-sm">
-              <span className="text-3xl">💬</span>
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <span className="text-purple-600 font-semibold">?</span>
+              </div>
               <div>
                 <h4 className="font-semibold text-gray-900 mb-1">Customer Support</h4>
                 <p className="text-gray-600 text-sm">Contact us anytime if you have questions about your order</p>
