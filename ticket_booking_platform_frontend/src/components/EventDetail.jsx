@@ -152,9 +152,19 @@ const EventDetail = () => {
   }, [seatMapData, getCategoryForSeat]);
 
   const calculateTotal = useCallback(() => {
-    return selectedSeats.reduce((total, seatId) => {
+    const total = selectedSeats.reduce((total, seatId) => {
       return total + getSeatPrice(seatId);
     }, 0);
+
+    const numberOfSeats = selectedSeats.length;
+    let discountPercentage = 0;
+    if (numberOfSeats > 10) {
+      discountPercentage = 0.25; // 25% discount
+    } else if (numberOfSeats >= 5) {
+      discountPercentage = 0.10; // 10% discount
+    }
+
+    return total * (1 - discountPercentage);
   }, [selectedSeats, getSeatPrice]);
 
   const handleProceedToCheckout = () => {
@@ -641,6 +651,11 @@ const EventDetail = () => {
                   <div className="text-lg font-semibold text-gray-900">
                     {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''} - {calculateTotal().toLocaleString()} USD
                   </div>
+                  {selectedSeats.length >= 5 && (
+                    <div className="text-sm text-green-600 mt-2">
+                      Discount Applied: {selectedSeats.length > 10 ? "25%" : "10%"}
+                    </div>
+                  )}
                 </div>
               </div>
 

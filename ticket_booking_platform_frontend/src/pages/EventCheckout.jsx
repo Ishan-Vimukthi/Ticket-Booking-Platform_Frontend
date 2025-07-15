@@ -19,20 +19,28 @@ const CheckoutForm = ({ eventDetails, selectedSeats, totalPrice, detailedSelecte
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [succeeded, setSucceeded] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const handleSubmit = async (event) => {
+  const handleInitialSubmit = (event) => {
     event.preventDefault();
+    if (!name || !email || !phone) {
+      setError('Please fill in all ticket holder details.');
+      return;
+    }
+    setShowConfirmation(true);
+  };
+
+  const handleFinalSubmit = async () => {
+    setShowConfirmation(false);
+    handleSubmit();
+  };
+
+  const handleSubmit = async () => {
     setProcessing(true);
     setError(null);
 
     if (!stripe || !elements) {
       setError("Stripe.js has not loaded yet. Please try again in a moment.");
-      setProcessing(false);
-      return;
-    }
-
-    if (!name || !email || !phone) {
-      setError('Please fill in all ticket holder details.');
       setProcessing(false);
       return;
     }
@@ -76,7 +84,6 @@ const CheckoutForm = ({ eventDetails, selectedSeats, totalPrice, detailedSelecte
           })),
           ticketHolderDetails: { name, email, phone },
           paymentMethodId: paymentMethod.id,
-          totalPrice: totalPrice,
         }),
       });
 
@@ -136,102 +143,130 @@ const CheckoutForm = ({ eventDetails, selectedSeats, totalPrice, detailedSelecte
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          Full Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          required
-        />
-      </div>
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email Address
-        </label>
-        <input
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          required
-        />
-      </div>
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-          Phone Number
-        </label>
-        <input
-          type="tel"
-          id="phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          required
-        />
-      </div>
+    <>
+      <form onSubmit={handleInitialSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            Full Name
+          </label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email Address
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            required
+          />
+        </div>
 
-      {/* Stripe Card Element will go here */}
-      <div className="mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Payment Details
-        </label>
-        <CardElement 
-          className="p-3 border border-gray-300 rounded-md"
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                  color: '#aab7c4',
+        {/* Stripe Card Element will go here */}
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Payment Details
+          </label>
+          <CardElement
+            className="p-3 border border-gray-300 rounded-md"
+            options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#424770',
+                  '::placeholder': {
+                    color: '#aab7c4',
+                  },
+                },
+                invalid: {
+                  color: '#9e2146',
                 },
               },
-              invalid: {
-                color: '#9e2146',
-              },
-            },
-          }}
-        />
-      </div>
+            }}
+          />
+        </div>
 
-      {error && (
-        <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-md">
-          {error}
+        {error && (
+          <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-md">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={processing || !stripe || !elements || succeeded}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 disabled:opacity-50"
+        >
+          {processing ? 'Processing...' : `Pay USD ${totalPrice.toLocaleString()}`}
+        </button>
+      </form>
+
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg shadow-xl">
+            <h2 className="text-xl font-semibold mb-4">Confirm Your Order</h2>
+            <p className="mb-2">The payment will be processed in USD currency using Stripe payment gateway.</p>
+            <p className="font-semibold mb-4">Order Summary:</p>
+            <p className="mb-2">{detailedSelectedSeats.length} seats - {totalPrice} USD</p>
+            <p>Do you want to continue with the checkout process?</p>
+            <div className="mt-6 flex justify-end space-x-4">
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md transition duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleFinalSubmit}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
         </div>
       )}
-
-      <button
-        type="submit"
-        disabled={processing || !stripe || !elements || succeeded}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 disabled:opacity-50"
-      >
-        {processing ? 'Processing...' : `Pay USD ${totalPrice.toLocaleString()}`}
-      </button>
-    </form>
+    </>
   );
 };
 
 const EventCheckout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { eventDetails, selectedSeats, totalPrice } = location.state || {};
+  const { eventDetails, selectedSeats } = location.state || {};
 
   useEffect(() => {
-    if (!eventDetails || !selectedSeats || !totalPrice) {
+    if (!eventDetails || !selectedSeats) {
       // If state is missing, redirect back or to an error page
       console.warn('Checkout page accessed without necessary state. Redirecting...');
       navigate(-1); // Go back to the previous page
     }
-  }, [eventDetails, selectedSeats, totalPrice, navigate]);
+  }, [eventDetails, selectedSeats, navigate]);
 
-  if (!eventDetails || !selectedSeats || totalPrice === undefined) {
+  if (!eventDetails || !selectedSeats) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <NavBar />
@@ -274,6 +309,16 @@ const EventCheckout = () => {
   };
 
   const detailedSelectedSeats = selectedSeats.map(getSeatDetailsForDisplay);
+  const totalPrice = detailedSelectedSeats.reduce((acc, seat) => acc + seat.price, 0);
+  const numSeats = selectedSeats.length;
+  let discount = 0;
+  if (numSeats > 10) {
+    discount = 0.25;
+  } else if (numSeats >= 5) {
+    discount = 0.10;
+  }
+  const discountAmount = totalPrice * discount;
+  const finalPrice = totalPrice - discountAmount;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -306,9 +351,21 @@ const EventCheckout = () => {
               ))}
             </div>
             
-            <div className="flex justify-between items-center font-bold text-lg text-gray-900">
-              <span>Total</span>
-              <span>USD {totalPrice.toLocaleString()}</span>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-gray-600">
+                <span>Subtotal</span>
+                <span>USD {totalPrice.toLocaleString()}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between items-center text-green-600">
+                  <span>Discount ({discount * 100}%)</span>
+                  <span>- USD {discountAmount.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center font-bold text-lg text-gray-900 border-t pt-2">
+                <span>Total</span>
+                <span>USD {finalPrice.toLocaleString()}</span>
+              </div>
             </div>
           </div>
 
@@ -319,7 +376,7 @@ const EventCheckout = () => {
               <CheckoutForm 
                 eventDetails={eventDetails}
                 selectedSeats={selectedSeats}
-                totalPrice={totalPrice}
+                totalPrice={finalPrice}
                 detailedSelectedSeats={detailedSelectedSeats}
               />
             </Elements>
